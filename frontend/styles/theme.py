@@ -6,7 +6,13 @@ def get_theme_css(theme: str) -> str:
     """Generate dynamic CSS tokens and Streamlit component overrides based on theme."""
     is_dark = (theme == "dark")
     if is_dark:
+        color_scheme = "dark"
         vars_css = """
+        color-scheme: dark;
+        --background-color: #0c0d10;
+        --secondary-background-color: #1b1e25;
+        --text-color: #f4f5f8;
+        --primary-color: #6366f1;
         --sb-bg: #0c0d10;
         --sb-surface: #14161b;
         --sb-surface-muted: #1b1e25;
@@ -35,7 +41,13 @@ def get_theme_css(theme: str) -> str:
         --sb-shadow-lg: 0 12px 20px -3px rgba(0, 0, 0, 0.6);
         """
     else:
+        color_scheme = "light"
         vars_css = """
+        color-scheme: light;
+        --background-color: #fbfaf8;
+        --secondary-background-color: #f3f2ee;
+        --text-color: #141517;
+        --primary-color: #4338ca;
         --sb-bg: #fbfaf8;
         --sb-surface: #ffffff;
         --sb-surface-muted: #f3f2ee;
@@ -69,16 +81,28 @@ def get_theme_css(theme: str) -> str:
     /* Google Fonts: Inter & JetBrains Mono */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
-    :root {{
+    :root,
+    html,
+    body,
+    .stApp,
+    [data-testid="stAppViewContainer"] {{
+        color-scheme: {color_scheme} !important;
+        --background-color: var(--sb-bg) !important;
+        --secondary-background-color: var(--sb-surface-muted) !important;
+        --text-color: var(--sb-text-main) !important;
+        --primary-color: var(--sb-primary) !important;
         {vars_css}
     }}
 
     /* Global Application Canvas */
+    html,
+    body,
     .stApp,
     [data-testid="stAppViewContainer"],
     [data-testid="stHeader"],
     section.main,
     .main,
+    [data-testid="stMain"],
     [data-testid="stMainBlockContainer"],
     [data-testid="stBottomBlockContainer"] {{
         background-color: var(--sb-bg) !important;
@@ -89,6 +113,31 @@ def get_theme_css(theme: str) -> str:
 
     header[data-testid="stHeader"] {{
         background: transparent !important;
+    }}
+
+    header[data-testid="stHeader"] button,
+    header[data-testid="stHeader"] svg {{
+        color: var(--sb-text-muted) !important;
+        fill: var(--sb-text-muted) !important;
+    }}
+    header[data-testid="stHeader"] button:hover,
+    header[data-testid="stHeader"] button:hover svg {{
+        color: var(--sb-text-main) !important;
+        fill: var(--sb-text-main) !important;
+    }}
+
+    /* Sidebar Overrides */
+    [data-testid="stSidebar"],
+    [data-testid="stSidebarContent"],
+    section[data-testid="stSidebar"] {{
+        background-color: var(--sb-surface) !important;
+        color: var(--sb-text-main) !important;
+        border-right: 1px solid var(--sb-border) !important;
+    }}
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+    [data-testid="stSidebar"] label,
+    [data-testid="stSidebar"] span {{
+        color: var(--sb-text-main) !important;
     }}
 
     /* Main Container Constraints */
@@ -119,11 +168,36 @@ def get_theme_css(theme: str) -> str:
     h1, h2, h3, h4, h5, h6 {{
         color: var(--sb-text-main) !important;
     }}
-    p, span, label, div[data-testid="stMarkdownContainer"] p {{
-        color: inherit;
+    div[data-testid="stMarkdownContainer"],
+    div[data-testid="stMarkdownContainer"] p,
+    div[data-testid="stMarkdownContainer"] span,
+    div[data-testid="stMarkdownContainer"] li,
+    div[data-testid="stMarkdownContainer"] div,
+    div[data-testid="stText"],
+    p, span, label,
+    .stWidgetLabel label,
+    [data-testid="stWidgetLabel"] label,
+    [data-testid="stWidgetLabel"] p,
+    [data-testid="stWidgetLabel"] span {{
+        color: var(--sb-text-main) !important;
     }}
-    div[data-testid="stCaptionContainer"] p {{
+    div[data-testid="stCaptionContainer"] p,
+    div[data-testid="stCaptionContainer"] span {{
         color: var(--sb-text-muted) !important;
+    }}
+    hr {{
+        border: none !important;
+        border-top: 1px solid var(--sb-border) !important;
+        margin: 1.5rem 0 !important;
+    }}
+    code {{
+        background-color: var(--sb-surface-muted) !important;
+        color: var(--sb-primary) !important;
+        border: 1px solid var(--sb-border) !important;
+        padding: 0.15rem 0.35rem !important;
+        border-radius: 4px !important;
+        font-family: 'JetBrains Mono', monospace !important;
+        font-size: 0.85em !important;
     }}
 
     /* Global Button Base Styling */
@@ -193,26 +267,55 @@ def get_theme_css(theme: str) -> str:
         color: var(--sb-text-main) !important;
         background-color: transparent !important;
     }}
+
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] div {{
+        color: var(--sb-text-main) !important;
+    }}
+    div[data-baseweb="select"] svg {{
+        fill: var(--sb-text-muted) !important;
+    }}
+
     div[data-baseweb="popover"],
+    div[data-baseweb="popover"] > div,
     ul[role="listbox"] {{
         background-color: var(--sb-surface) !important;
         border: 1px solid var(--sb-border) !important;
         box-shadow: var(--sb-shadow-md) !important;
+        color: var(--sb-text-main) !important;
     }}
     li[role="option"] {{
         background-color: var(--sb-surface) !important;
         color: var(--sb-text-main) !important;
     }}
+    li[role="option"] * {{
+        color: var(--sb-text-main) !important;
+    }}
     li[role="option"]:hover,
     li[aria-selected="true"] {{
         background-color: var(--sb-surface-muted) !important;
-        color: var(--sb-text-main) !important;
+        color: var(--sb-primary) !important;
     }}
+    li[role="option"]:hover *,
+    li[aria-selected="true"] * {{
+        color: var(--sb-primary) !important;
+    }}
+
     div[data-testid="stCheckbox"] label,
-    div[data-testid="stRadio"] label {{
+    div[data-testid="stCheckbox"] span,
+    div[data-testid="stRadio"] label,
+    div[data-testid="stRadio"] span,
+    div[data-testid="stRadio"] [role="radiogroup"] label,
+    div[data-testid="stToggle"] label,
+    div[data-testid="stToggle"] span {{
         color: var(--sb-text-main) !important;
     }}
-    div[data-testid="stSlider"] label {{
+    div[data-testid="stSlider"] label,
+    div[data-testid="stSlider"] [data-testid="stThumbValue"],
+    div[data-testid="stSlider"] div[data-testid="stTickBar"] span {{
+        color: var(--sb-text-main) !important;
+    }}
+    div[data-baseweb="slider"] div {{
         color: var(--sb-text-main) !important;
     }}
 
@@ -224,10 +327,12 @@ def get_theme_css(theme: str) -> str:
         padding: 0.85rem 1rem !important;
         box-shadow: var(--sb-shadow) !important;
     }}
-    div[data-testid="stMetricLabel"] p {{
+    div[data-testid="stMetricLabel"] p,
+    div[data-testid="stMetricLabel"] span {{
         color: var(--sb-text-muted) !important;
     }}
-    div[data-testid="stMetricValue"] {{
+    div[data-testid="stMetricValue"],
+    div[data-testid="stMetricValue"] div {{
         color: var(--sb-text-main) !important;
     }}
 
@@ -238,11 +343,33 @@ def get_theme_css(theme: str) -> str:
         border-radius: var(--sb-radius-card) !important;
         box-shadow: var(--sb-shadow) !important;
     }}
-    [data-testid="stExpander"] summary {{
+    [data-testid="stExpander"] summary,
+    [data-testid="stExpander"] summary span,
+    [data-testid="stExpander"] summary p {{
         color: var(--sb-text-main) !important;
     }}
     [data-testid="stExpander"] div[data-testid="stMarkdownContainer"] p {{
         color: var(--sb-text-muted) !important;
+    }}
+
+    /* Alert Boxes (st.info, st.warning, st.error, st.success) */
+    div[data-testid="stAlert"] {{
+        background-color: var(--sb-surface) !important;
+        border: 1px solid var(--sb-border) !important;
+        border-radius: var(--sb-radius-card) !important;
+        color: var(--sb-text-main) !important;
+    }}
+    div[data-testid="stAlert"] [data-testid="stMarkdownContainer"] p {{
+        color: var(--sb-text-main) !important;
+    }}
+
+    /* DataFrames & Tables */
+    [data-testid="stDataFrame"],
+    [data-testid="stTable"] {{
+        background-color: var(--sb-surface) !important;
+        color: var(--sb-text-main) !important;
+        border-radius: var(--sb-radius-card) !important;
+        border: 1px solid var(--sb-border) !important;
     }}
 
     /* Top Brand Navigation Header */

@@ -38,12 +38,13 @@ def render_navbar() -> None:
     with nav_theme_col:
         is_dark = st.session_state.theme == "dark"
         theme_btn_label = "☀️ Light Mode" if is_dark else "🌙 Dark Mode"
-        st.button(
+        if st.button(
             theme_btn_label,
             key="theme_toggle_btn",
             use_container_width=True,
             on_click=_toggle_theme,
-        )
+        ):
+            st.rerun()
 
     is_live_active = (
         st.session_state.active_page == "Live App"

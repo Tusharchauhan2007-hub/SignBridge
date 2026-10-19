@@ -73,6 +73,13 @@ if "theme" not in st.session_state:
     except Exception:
         st.session_state.theme = "light"
 
+# Keep query parameter synchronized with session state
+try:
+    if st.query_params.get("theme") != st.session_state.theme:
+        st.query_params["theme"] = st.session_state.theme
+except Exception:
+    pass
+
 # Inject dynamic CSS design system
 st.markdown(get_theme_css(st.session_state.theme), unsafe_allow_html=True)
 

@@ -60,3 +60,47 @@ def test_creator_credits():
     assert "Ujjwal Dhiman" in content
     assert "A project by Tushar Chauhan and Ujjwal Dhiman" in content
 
+
+def test_dark_and_light_palette_generation():
+    """Verify that get_theme_css produces distinct, valid palettes for both dark and light modes."""
+    from frontend.styles.theme import get_theme_css
+
+    dark_css = get_theme_css("dark")
+    light_css = get_theme_css("light")
+
+    # Dark mode assertions
+    assert "color-scheme: dark" in dark_css
+    assert "--sb-bg: #0c0d10" in dark_css
+    assert "--sb-text-main: #f4f5f8" in dark_css
+    assert "--background-color: var(--sb-bg)" in dark_css
+    assert "--text-color: var(--sb-text-main)" in dark_css
+    assert '[data-testid="stSidebar"]' in dark_css
+    assert 'div[data-testid="stMarkdownContainer"]' in dark_css
+    assert 'div[data-testid="stToggle"]' in dark_css
+    assert 'div[data-baseweb="select"]' in dark_css
+    assert 'div[data-baseweb="popover"]' in dark_css
+    assert 'div[data-testid="stAlert"]' in dark_css
+
+    # Light mode assertions
+    assert "color-scheme: light" in light_css
+    assert "--sb-bg: #fbfaf8" in light_css
+    assert "--sb-text-main: #141517" in light_css
+    assert "--background-color: var(--sb-bg)" in light_css
+    assert "--text-color: var(--sb-text-main)" in light_css
+
+
+def test_theme_toggle_logic():
+    """Verify that theme toggle correctly alternates between light and dark."""
+    from frontend.components.navbar import _toggle_theme
+    import streamlit as st
+
+    # Simulate light theme
+    st.session_state.theme = "light"
+    _toggle_theme()
+    assert st.session_state.theme == "dark"
+
+    # Simulate dark theme
+    _toggle_theme()
+    assert st.session_state.theme == "light"
+
+
