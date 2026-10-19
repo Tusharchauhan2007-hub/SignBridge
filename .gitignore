@@ -1,0 +1,39 @@
+# Environments
+.venv/
+env/
+venv/
+ENV/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+
+# Pytest / Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# User / IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Data & Models (preserve .gitkeep, ignore temporary capture dumps)
+*.mp4
+*.avi
+*.mov
+
+# Backup directories
+_backup_pre_refactor/
+
+
+# Large translation model kept locally
+models/opus_mt_en_hi/model.safetensors
