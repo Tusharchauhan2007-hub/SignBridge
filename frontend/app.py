@@ -136,6 +136,9 @@ if "last_added_sign_flash" not in st.session_state:
 if "live_mode_view" not in st.session_state:
     st.session_state.live_mode_view = "Live Recognition"
 
+if "live_mode_selector" not in st.session_state:
+    st.session_state.live_mode_selector = "Live Recognition"
+
 
 # -----------------------------------------------------------------------------
 # Cached Backend Resources

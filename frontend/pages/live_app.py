@@ -56,10 +56,14 @@ def render_live_app_page(
     # Workspace Navigation / Mode Selection Toolbar
     m_col1, m_col2, m_col3 = st.columns([2.2, 1.2, 1.2])
     with m_col1:
+        current_mode = st.session_state.get("live_mode_view", "Live Recognition")
+        if st.session_state.get("live_mode_selector") != current_mode:
+            st.session_state.live_mode_selector = current_mode
+
         mode_choice = st.radio(
             "Workspace Mode",
             options=["Live Recognition", "Interactive Practice Mode"],
-            index=0 if st.session_state.get("live_mode_view", "Live Recognition") == "Live Recognition" else 1,
+            index=0 if current_mode == "Live Recognition" else 1,
             horizontal=True,
             key="live_mode_selector",
             label_visibility="collapsed",

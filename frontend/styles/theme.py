@@ -1,4 +1,4 @@
-﻿"""
+"""
 Theme definitions and dynamic CSS generation for SignBridge.
 Supports dark/light themes, anti-stale overlays, and accessible styling.
 """
@@ -304,6 +304,7 @@ def get_theme_css(theme: str) -> str:
     .st-key-nav_home button,
     .st-key-nav_how button,
     .st-key-nav_feat button,
+    .st-key-nav_practice button,
     .st-key-nav_studio button,
     .st-key-nav_about button,
     div[class*="st-key-nav_"]:not([class*="st-key-nav_launch"]) button {{
@@ -320,6 +321,7 @@ def get_theme_css(theme: str) -> str:
     .st-key-nav_home button:hover,
     .st-key-nav_how button:hover,
     .st-key-nav_feat button:hover,
+    .st-key-nav_practice button:hover,
     .st-key-nav_studio button:hover,
     .st-key-nav_about button:hover,
     div[class*="st-key-nav_"]:not([class*="st-key-nav_launch"]) button:hover {{
@@ -330,11 +332,13 @@ def get_theme_css(theme: str) -> str:
     .st-key-nav_home button[kind="primary"],
     .st-key-nav_how button[kind="primary"],
     .st-key-nav_feat button[kind="primary"],
+    .st-key-nav_practice button[kind="primary"],
     .st-key-nav_studio button[kind="primary"],
     .st-key-nav_about button[kind="primary"],
     .st-key-nav_home button[data-testid="baseButton-primary"],
     .st-key-nav_how button[data-testid="baseButton-primary"],
     .st-key-nav_feat button[data-testid="baseButton-primary"],
+    .st-key-nav_practice button[data-testid="baseButton-primary"],
     .st-key-nav_studio button[data-testid="baseButton-primary"],
     .st-key-nav_about button[data-testid="baseButton-primary"],
     div[class*="st-key-nav_"]:not([class*="st-key-nav_launch"]) button[kind="primary"],

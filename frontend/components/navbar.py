@@ -45,8 +45,17 @@ def render_navbar() -> None:
             on_click=_toggle_theme,
         )
 
+    is_live_active = (
+        st.session_state.active_page == "Live App"
+        and st.session_state.get("live_mode_view", "Live Recognition") == "Live Recognition"
+    )
+    is_practice_active = (
+        st.session_state.active_page == "Live App"
+        and st.session_state.get("live_mode_view") == "Interactive Practice Mode"
+    )
+
     # Navigation Menu Buttons (Production Tabs Style)
-    nav_col1, nav_col2, nav_col3, nav_col4, nav_col5, nav_col6 = st.columns([1, 1, 1, 1, 1, 1.2])
+    nav_col1, nav_col2, nav_col3, nav_col4, nav_col5, nav_col6, nav_col7 = st.columns([1, 1.1, 1, 1.35, 1, 0.9, 1.2])
 
     with nav_col1:
         if st.button("Home", key="nav_home", use_container_width=True, type="secondary" if st.session_state.active_page != "Home" else "primary"):
@@ -64,18 +73,27 @@ def render_navbar() -> None:
             st.rerun()
 
     with nav_col4:
+        if st.button("Practice & Learn", key="nav_practice", use_container_width=True, type="primary" if is_practice_active else "secondary"):
+            st.session_state.active_page = "Live App"
+            st.session_state.live_mode_view = "Interactive Practice Mode"
+            st.session_state["live_mode_selector"] = "Interactive Practice Mode"
+            st.rerun()
+
+    with nav_col5:
         if st.button("Studio", key="nav_studio", use_container_width=True, type="secondary" if st.session_state.active_page != "Studio" else "primary"):
             st.session_state.active_page = "Studio"
             st.rerun()
 
-    with nav_col5:
+    with nav_col6:
         if st.button("About", key="nav_about", use_container_width=True, type="secondary" if st.session_state.active_page != "About" else "primary"):
             st.session_state.active_page = "About"
             st.rerun()
 
-    with nav_col6:
-        if st.button("Launch App", key="nav_launch", use_container_width=True, type="primary" if st.session_state.active_page == "Live App" else "secondary"):
+    with nav_col7:
+        if st.button("Launch App", key="nav_launch", use_container_width=True, type="primary" if is_live_active else "secondary"):
             st.session_state.active_page = "Live App"
+            st.session_state.live_mode_view = "Live Recognition"
+            st.session_state["live_mode_selector"] = "Live Recognition"
             st.rerun()
 
     st.markdown("<div style='height: 1rem;'></div>", unsafe_allow_html=True)

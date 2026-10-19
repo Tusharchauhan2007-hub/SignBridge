@@ -1,4 +1,4 @@
-﻿"""
+"""
 Studio page for SignBridge: Dataset Collection & Model Training.
 Enables collecting labeled hand landmarks, viewing alphabet coverage,
 and training local Random Forest models.
@@ -41,7 +41,10 @@ def render_studio_page(
         unsafe_allow_html=True,
     )
     
-    tab_data, tab_train = st.tabs(["1. Dataset Collection (Aâ€“Z & Gestures)", "2. Model Training & Evaluation"])
+    class_counts = dataset_mgr.get_class_counts()
+    total_samples = sum(class_counts.values())
+
+    tab_data, tab_train = st.tabs(["1. Dataset Collection (A–Z & Gestures)", "2. Model Training & Evaluation"])
     
     # Sub-Tab 1: Dataset Collection
     with tab_data:
@@ -50,7 +53,7 @@ def render_studio_page(
         with col_d_left:
             st.markdown("### Target Sign Selection")
             
-            cat_opts = ["Alphabet Letters (Aâ€“Z)", "Core ISL Gestures", "Custom Label"]
+            cat_opts = ["Alphabet Letters (A–Z)", "Core ISL Gestures", "Custom Label"]
             cat_default_idx = 0
             if st.session_state.target_category in cat_opts:
                 cat_default_idx = cat_opts.index(st.session_state.target_category)
@@ -64,10 +67,10 @@ def render_studio_page(
             )
             st.session_state.target_category = vocab_cat
     
-            counts_dict = dataset_mgr.get_class_counts()
+            counts_dict = class_counts
             active_model_classes = set(predictor.classes) if predictor.is_loaded else set()
     
-            if vocab_cat == "Alphabet Letters (Aâ€“Z)":
+            if vocab_cat == "Alphabet Letters (A–Z)":
                 default_let_idx = 0
                 if st.session_state.target_letter in ISL_ALPHABET_LETTERS:
                     default_let_idx = ISL_ALPHABET_LETTERS.index(st.session_state.target_letter)
@@ -316,7 +319,7 @@ def render_studio_page(
     
         is_valid, validation_issues = dataset_mgr.validate_dataset()
         if not is_valid:
-            st.warning("âš ï¸ **Dataset Validation Alert:**")
+            st.warning("⚠️ **Dataset Validation Alert:**")
             for issue in validation_issues:
                 st.markdown(f"- {issue}")
             st.info("Collect samples for at least 2 distinct classes in **Tab 1: Dataset Collection** before training.")

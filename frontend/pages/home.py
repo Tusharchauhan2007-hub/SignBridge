@@ -27,12 +27,20 @@ def render_home_page(dataset_mgr: DatasetManager, predictor: SignPredictor) -> N
             unsafe_allow_html=True,
         )
 
-        c_cta1, c_cta2 = st.columns([1.15, 1.1])
+        c_cta1, c_cta2, c_cta3 = st.columns([1.15, 1.15, 1.05])
         with c_cta1:
             if st.button("Launch SignBridge →", type="primary", use_container_width=True, key="hero_primary"):
                 st.session_state.active_page = "Live App"
+                st.session_state.live_mode_view = "Live Recognition"
+                st.session_state["live_mode_selector"] = "Live Recognition"
                 st.rerun()
         with c_cta2:
+            if st.button("Practice Signs 🎯", type="secondary", use_container_width=True, key="hero_practice"):
+                st.session_state.active_page = "Live App"
+                st.session_state.live_mode_view = "Interactive Practice Mode"
+                st.session_state["live_mode_selector"] = "Interactive Practice Mode"
+                st.rerun()
+        with c_cta3:
             if st.button("Explore How It Works", use_container_width=True, key="hero_secondary"):
                 st.session_state.active_page = "How It Works"
                 st.rerun()
@@ -341,12 +349,12 @@ def render_home_page(dataset_mgr: DatasetManager, predictor: SignPredictor) -> N
         )
 
         st.markdown("<div style='height:0.8rem;'></div>", unsafe_allow_html=True)
-        # Quick letter selection to jump straight to recording
-        sel_col1, sel_col2 = st.columns([1.5, 1.5])
+        # Quick letter selection to jump straight to practice or recording
+        sel_col1, sel_col2 = st.columns([1.3, 1.7])
         with sel_col1:
             cov_labels = [f"{it['letter']} — {it['status']} ({it['count']} samples)" for it in cov_items]
             selected_cov_idx = st.selectbox(
-                "Select letter to collect:",
+                "Select letter to practice or collect:",
                 range(len(cov_items)),
                 format_func=lambda i: cov_labels[i],
                 key="home_letter_sel",
@@ -354,9 +362,18 @@ def render_home_page(dataset_mgr: DatasetManager, predictor: SignPredictor) -> N
             chosen_letter = cov_items[selected_cov_idx]["letter"]
         with sel_col2:
             st.markdown("<div style='height: 1.7rem;'></div>", unsafe_allow_html=True)
-            if st.button(f"Collect '{chosen_letter}' in Studio →", type="primary", use_container_width=True, key="home_go_studio_btn"):
-                st.session_state.target_letter = chosen_letter
-                st.session_state.target_category = "Alphabet Letters (A–Z)"
-                st.session_state.active_page = "Studio"
-                st.rerun()
+            act_col1, act_col2 = st.columns([1, 1])
+            with act_col1:
+                if st.button(f"Practice '{chosen_letter}' 🎯", use_container_width=True, key="home_go_practice_btn"):
+                    st.session_state.practice_target = chosen_letter
+                    st.session_state.active_page = "Live App"
+                    st.session_state.live_mode_view = "Interactive Practice Mode"
+                    st.session_state["live_mode_selector"] = "Interactive Practice Mode"
+                    st.rerun()
+            with act_col2:
+                if st.button(f"Collect in Studio →", type="primary", use_container_width=True, key="home_go_studio_btn"):
+                    st.session_state.target_letter = chosen_letter
+                    st.session_state.target_category = "Alphabet Letters (A–Z)"
+                    st.session_state.active_page = "Studio"
+                    st.rerun()
 
