@@ -40,6 +40,11 @@ def test_backend_exports_and_functionality():
     translator = EnglishToHindiTranslator()
     assert hasattr(translator, "translate")
 
+    tracker = HandTracker(max_num_hands=1)
+    res = tracker.detect(np.zeros((240, 320, 3), dtype=np.uint8))
+    assert res.has_hand is False
+    assert len(res.hands) == 0
+
 
 def test_frontend_exports_and_structure():
     """Verify frontend styling, components, and pages exist and are importable."""
@@ -87,4 +92,16 @@ def test_src_backwards_compatibility_shims():
     from src.translator import EnglishToHindiTranslator as TR_Src
     from backend.translator import EnglishToHindiTranslator as TR_Back
     assert TR_Src is TR_Back
+
+
+def test_app_and_frontend_importable_without_premature_execution():
+    """Verify that importing app and frontend.app does not crash or execute main prematurely."""
+    import importlib
+    import app
+    assert hasattr(app, "main")
+    assert callable(app.main)
+
+    from frontend import app as frontend_app
+    assert hasattr(frontend_app, "main")
+    assert callable(frontend_app.main)
 

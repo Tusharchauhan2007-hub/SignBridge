@@ -234,13 +234,13 @@ python src\train_model.py
 
 ## 🚀 Running the Application
 
-Launch the Streamlit interactive dashboard using either entry point:
+Launch the Streamlit interactive dashboard using either command:
 ```powershell
-# Root entry point (pre-initializes PyTorch on Windows 11):
-python -m streamlit run app.py
+# Recommended Windows 11 virtual environment command:
+.\.venv\Scripts\python.exe -m streamlit run app.py
 
-# Direct frontend module entry point:
-python -m streamlit run frontend/app.py
+# Or if .venv is activated:
+python -m streamlit run app.py
 ```
 The browser will automatically open at `http://localhost:8501`.
 
@@ -259,7 +259,8 @@ Execute the comprehensive automated test suite covering backend logic, frontend 
 platform win32 -- Python 3.11.9, pytest-9.1.1, pluggy-1.6.0
 rootdir: D:\vs_code\innotech
 plugins: anyio-4.15.1, platformdirs-4.13.0
-collected 38 items
+collected 39 items
+
 
 tests/test_backend_frontend_refactor.py::test_backend_exports_and_functionality PASSED [  2%]
 tests/test_backend_frontend_refactor.py::test_frontend_exports_and_structure PASSED [  5%]
@@ -363,5 +364,5 @@ tests/test_translation.py::test_app_ui_translation_integration PASSED    [100%]
 - [x] Alphabet Coverage Status dynamically driven by dataset CSV and model artifact.
 - [x] Offline neural English-to-Hindi translation using local MarianMT (`models/opus_mt_en_hi`).
 - [x] Clean modular frontend (`frontend/`) and backend (`backend/`) architecture with backwards-compatible `src/` shims.
-- [x] All 38 automated unit tests passing across backend, frontend, models, and translation.
+- [x] All 39 automated unit tests passing across backend, frontend, models, and translation.
 

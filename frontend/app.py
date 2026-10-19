@@ -13,6 +13,19 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+# Prioritize project virtual environment site-packages if running outside venv
+VENV_SITE_PACKAGES = PROJECT_ROOT / ".venv" / "Lib" / "site-packages"
+if VENV_SITE_PACKAGES.exists() and str(VENV_SITE_PACKAGES) not in sys.path:
+    sys.path.insert(0, str(VENV_SITE_PACKAGES))
+
+# Add .venv MediaPipe C bindings DLL path to Windows DLL search directory
+VENV_MEDIAPIPE_C = VENV_SITE_PACKAGES / "mediapipe" / "tasks" / "c"
+if VENV_MEDIAPIPE_C.exists() and hasattr(os, "add_dll_directory"):
+    try:
+        os.add_dll_directory(str(VENV_MEDIAPIPE_C))
+    except Exception:
+        pass
+
 # On Windows 11, pre-importing torch before OpenCV/MediaPipe/scikit-learn
 # ensures PyTorch's c10.dll and OpenMP runtimes initialize cleanly without WinError 1114.
 try:
@@ -159,12 +172,8 @@ def get_translator() -> EnglishToHindiTranslator:
 
 def main() -> None:
     """Main presentation router executing active page."""
-    sb: SentenceBuilder = st.session_state.sentence_builder
-    preprocessor = get_preprocessor()
-    tracker = get_hand_tracker()
-    predictor = get_predictor()
     dataset_mgr = get_dataset_manager()
-    translator = get_translator()
+    predictor = get_predictor()
 
     # Global Navigation Bar & Theme Toggle
     render_navbar()
@@ -179,8 +188,14 @@ def main() -> None:
     elif current_page == "Features":
         render_features_page()
     elif current_page == "Live App":
+        sb: SentenceBuilder = st.session_state.sentence_builder
+        preprocessor = get_preprocessor()
+        tracker = get_hand_tracker()
+        translator = get_translator()
         render_live_app_page(sb, preprocessor, tracker, predictor, translator)
     elif current_page == "Studio":
+        preprocessor = get_preprocessor()
+        tracker = get_hand_tracker()
         render_studio_page(dataset_mgr, preprocessor, tracker, predictor)
     elif current_page == "About":
         render_about_page()
@@ -189,6 +204,7 @@ def main() -> None:
     render_footer()
 
 
-if __name__ == "__main__" or True:
+if __name__ == "__main__":
     main()
+
 

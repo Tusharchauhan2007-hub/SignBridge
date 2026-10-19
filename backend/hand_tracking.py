@@ -94,7 +94,27 @@ class HandTracker:
             min_hand_presence_confidence=self.min_presence_confidence,
             min_tracking_confidence=self.min_tracking_confidence,
         )
-        self.detector = vision.HandLandmarker.create_from_options(options)
+        try:
+            self.detector = vision.HandLandmarker.create_from_options(options)
+        except OSError as err:
+            # If Windows Application Control blocked a global Python DLL,
+            # attempt to load the project's virtual environment DLL if available.
+            if "4551" in str(err) or "Application Control" in str(err):
+                import ctypes
+                from mediapipe.tasks.python.core import mediapipe_c_bindings
+                project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                venv_lib = os.path.join(
+                    project_root, ".venv", "Lib", "site-packages", "mediapipe", "tasks", "c", "libmediapipe.dll"
+                )
+                if os.path.isfile(venv_lib):
+                    try:
+                        mediapipe_c_bindings._shared_lib = ctypes.CDLL(venv_lib)
+                        self.detector = vision.HandLandmarker.create_from_options(options)
+                        return
+                    except Exception:
+                        pass
+            raise
+
 
     def detect(self, frame_bgr: np.ndarray) -> HandDetectionResult:
         """
