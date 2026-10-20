@@ -74,7 +74,7 @@ def render_studio_page(
                 default_let_idx = 0
                 if st.session_state.target_letter in ISL_ALPHABET_LETTERS:
                     default_let_idx = ISL_ALPHABET_LETTERS.index(st.session_state.target_letter)
-    
+
                 opts = []
                 for l in ISL_ALPHABET_LETTERS:
                     cnt = counts_dict.get(l, 0)
@@ -84,14 +84,23 @@ def render_studio_page(
                         st_txt = "Ready to train"
                     else:
                         st_txt = "Needs data"
-                    opts.append(f"{l} â€” {st_txt} ({cnt} samples)")
-    
+                    opts.append(f"{l} — {st_txt} ({cnt} samples)")
+
+                # Keep selectbox widget state in sync with external state updates
+                if "studio_target_letter_select" in st.session_state:
+                    if st.session_state.target_letter in ISL_ALPHABET_LETTERS:
+                        curr_sel = st.session_state["studio_target_letter_select"]
+                        if curr_sel < len(ISL_ALPHABET_LETTERS) and ISL_ALPHABET_LETTERS[curr_sel] != st.session_state.target_letter:
+                            st.session_state["studio_target_letter_select"] = default_let_idx
+                else:
+                    st.session_state["studio_target_letter_select"] = default_let_idx
+
                 sel_idx = st.selectbox(
-                    "Select Target Letter (Aâ€“Z)",
+                    "Select Target Letter (A–Z)",
                     range(len(ISL_ALPHABET_LETTERS)),
                     index=default_let_idx,
                     format_func=lambda i: opts[i],
-                    key="studio_target_letter_select"
+                    key="studio_target_letter_select",
                 )
                 target_sign = ISL_ALPHABET_LETTERS[sel_idx]
                 st.session_state.target_letter = target_sign
@@ -101,7 +110,7 @@ def render_studio_page(
                 for g in CORE_ISL_GESTURES:
                     cnt = counts_dict.get(g, 0)
                     st_txt = "Active" if g in active_model_classes else ("Ready" if cnt > 0 else "Needs data")
-                    opts.append(f"{g} â€” {st_txt} ({cnt} samples)")
+                    opts.append(f"{g} — {st_txt} ({cnt} samples)")
     
                 sel_idx = st.selectbox(
                     "Select Core Gesture",
@@ -119,15 +128,15 @@ def render_studio_page(
             guide_info = ISL_ALPHABET_GUIDE.get(target_sign, None)
             
             if target_sign in active_model_classes:
-                status_badge = "<span class='sb-matrix-badge-active' style='font-size:0.75rem; padding:3px 7px;'>â— Active in Classifier</span>"
+                status_badge = "<span class='sb-matrix-badge-active' style='font-size:0.75rem; padding:3px 7px;'>● Active in Classifier</span>"
             elif sample_count > 0:
-                status_badge = f"<span class='sb-matrix-badge-ready' style='font-size:0.75rem; padding:3px 7px;'>â–² Ready to Train ({sample_count} samples)</span>"
+                status_badge = f"<span class='sb-matrix-badge-ready' style='font-size:0.75rem; padding:3px 7px;'>▲ Ready to Train ({sample_count} samples)</span>"
             else:
-                status_badge = "<span class='sb-matrix-badge-needs' style='font-size:0.75rem; padding:3px 7px;'>â—‹ Needs Data (0 samples)</span>"
+                status_badge = "<span class='sb-matrix-badge-needs' style='font-size:0.75rem; padding:3px 7px;'>○ Needs Data (0 samples)</span>"
     
             motion_alert = ""
             if guide_info and "motion" in guide_info and "Note" in guide_info["motion"]:
-                motion_alert = f"<div style='font-size:0.8rem; color:var(--sb-warning); background:var(--sb-warning-bg); padding:6px 10px; border-radius:4px; border:1px solid var(--sb-warning-border); margin-top:0.4rem;'>âš ï¸ <strong>Movement Note:</strong> {guide_info['motion']}</div>"
+                motion_alert = f"<div style='font-size:0.8rem; color:var(--sb-warning); background:var(--sb-warning-bg); padding:6px 10px; border-radius:4px; border:1px solid var(--sb-warning-border); margin-top:0.4rem;'>⚠️ <strong>Movement Note:</strong> {guide_info['motion']}</div>"
     
             st.markdown(
                 f"""
@@ -143,7 +152,7 @@ def render_studio_page(
                         {guide_info['posture'] if guide_info else 'Maintain the verified static hand posture for this sign.'}
                     </div>
                     <div style="font-size:0.82rem; color:var(--sb-primary); background:var(--sb-primary-light); padding:6px 10px; border-radius:4px; border:1px solid var(--sb-primary-border);">
-                        ðŸ’¡ <strong>Camera Guidance:</strong> {guide_info['tips'] if guide_info else 'Keep hand clearly visible in the center of the webcam frame.'}
+                        💡 <strong>Camera Guidance:</strong> {guide_info['tips'] if guide_info else 'Keep hand clearly visible in the center of the webcam frame.'}
                     </div>
                     {motion_alert}
                 </div>
@@ -296,9 +305,9 @@ def render_studio_page(
                     <ul style="font-size:0.82rem; color:var(--sb-text-muted); margin:0; padding-left:1.2rem; line-height:1.55;">
                         <li><strong>Vary Distance:</strong> Capture some samples close (~35 cm) and some further (~65 cm).</li>
                         <li><strong>Vary Hand Position:</strong> Shift hand slightly left, center, right, and vertically.</li>
-                        <li><strong>Vary Angle:</strong> Tilt hand slightly (Â±15Â°) to ensure rotation invariance.</li>
+                        <li><strong>Vary Angle:</strong> Tilt hand slightly (±15°) to ensure rotation invariance.</li>
                         <li><strong>Lighting & Background:</strong> Collect samples across different ambient lighting.</li>
-                        <li><strong>Minimum Recommendation:</strong> Collect at least 15â€“20 samples per letter for balanced training.</li>
+                        <li><strong>Minimum Recommendation:</strong> Collect at least 15–20 samples per letter for balanced training.</li>
                     </ul>
                 </div>
                 """,
@@ -357,7 +366,7 @@ def render_studio_page(
                     fig_cm = trainer.render_confusion_matrix_plot(res["confusion_matrix"], res["classes"])
                     st.pyplot(fig_cm)
     
-                    if st.button("Test Model in Live App â†’", type="primary", key="train_go_live_btn"):
+                    if st.button("Test Model in Live App →", type="primary", key="train_go_live_btn"):
                         st.session_state.active_page = "Live App"
                         st.rerun()
     

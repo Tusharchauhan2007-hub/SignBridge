@@ -4,9 +4,40 @@ Integrates local MarianMT neural translation model with instant copy & dismiss c
 """
 
 import html
+import json
 import streamlit as st
 from backend.text_to_speech import SentenceBuilder
 from backend.translator import EnglishToHindiTranslator
+
+
+def _copy_to_clipboard(text: str) -> None:
+    """Injects client-side clipboard writer supporting modern navigator.clipboard and fallback."""
+    escaped = json.dumps(text)
+    js = f"""
+    <script>
+    (function() {{
+        var text = {escaped};
+        function fallback() {{
+            var ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.left = "-9999px";
+            ta.style.top = "-9999px";
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try {{ document.execCommand("copy"); }} catch (e) {{}}
+            document.body.removeChild(ta);
+        }}
+        if (navigator.clipboard && window.isSecureContext) {{
+            navigator.clipboard.writeText(text).catch(fallback);
+        }} else {{
+            fallback();
+        }}
+    }})();
+    </script>
+    """
+    st.components.v1.html(js, height=0)
 
 
 def render_translation_display() -> None:
@@ -28,7 +59,8 @@ def render_translation_display() -> None:
         c_hi_copy, c_hi_clear = st.columns([1.6, 1])
         with c_hi_copy:
             if st.button("Copy Hindi Translation", key="copy_hindi_btn", use_container_width=True):
-                st.toast(f"Copied Hindi: '{hi_text}'")
+                _copy_to_clipboard(hi_text)
+                st.toast(f"Copied Hindi to clipboard: '{hi_text}'")
         with c_hi_clear:
             if st.button("Dismiss Translation", key="dismiss_hindi_btn", use_container_width=True):
                 st.session_state.translated_hindi_text = ""

@@ -366,6 +366,7 @@ def render_home_page(dataset_mgr: DatasetManager, predictor: SignPredictor) -> N
             with act_col1:
                 if st.button(f"Practice '{chosen_letter}' 🎯", use_container_width=True, key="home_go_practice_btn"):
                     st.session_state.practice_target = chosen_letter
+                    st.session_state["practice_letter_select"] = chosen_letter
                     st.session_state.active_page = "Live App"
                     st.session_state.live_mode_view = "Interactive Practice Mode"
                     st.session_state["live_mode_selector"] = "Interactive Practice Mode"
@@ -374,6 +375,9 @@ def render_home_page(dataset_mgr: DatasetManager, predictor: SignPredictor) -> N
                 if st.button(f"Collect in Studio →", type="primary", use_container_width=True, key="home_go_studio_btn"):
                     st.session_state.target_letter = chosen_letter
                     st.session_state.target_category = "Alphabet Letters (A–Z)"
+                    st.session_state["studio_vocab_cat_radio"] = "Alphabet Letters (A–Z)"
+                    if chosen_letter in ISL_ALPHABET_LETTERS:
+                        st.session_state["studio_target_letter_select"] = ISL_ALPHABET_LETTERS.index(chosen_letter)
                     st.session_state.active_page = "Studio"
                     st.rerun()
 

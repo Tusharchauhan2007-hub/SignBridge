@@ -199,6 +199,10 @@ def render_live_app_page(
                 unsafe_allow_html=True,
             )
 
+            # Ensure selectbox widget key stays synchronized with programmatic updates
+            if st.session_state.get("practice_letter_select") != curr_target and curr_target in ISL_ALPHABET_LETTERS:
+                st.session_state["practice_letter_select"] = curr_target
+
             p_nav_col1, p_nav_col2 = st.columns([1.5, 1])
             with p_nav_col1:
                 sel_target = st.selectbox(
@@ -209,12 +213,15 @@ def render_live_app_page(
                 )
                 if sel_target != curr_target:
                     st.session_state.practice_target = sel_target
+                    st.session_state["practice_letter_select"] = sel_target
                     st.rerun()
             with p_nav_col2:
                 if st.button("Next Letter →", use_container_width=True, key="next_target_letter_btn"):
                     curr_idx = ISL_ALPHABET_LETTERS.index(curr_target) if curr_target in ISL_ALPHABET_LETTERS else -1
                     next_idx = (curr_idx + 1) % len(ISL_ALPHABET_LETTERS)
-                    st.session_state.practice_target = ISL_ALPHABET_LETTERS[next_idx]
+                    next_letter = ISL_ALPHABET_LETTERS[next_idx]
+                    st.session_state.practice_target = next_letter
+                    st.session_state["practice_letter_select"] = next_letter
                     st.rerun()
 
             p_feedback_placeholder = st.empty()

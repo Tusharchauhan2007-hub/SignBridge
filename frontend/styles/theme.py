@@ -205,11 +205,42 @@ def get_theme_css(theme: str) -> str:
     div[data-testid="stButton"] > button,
     div[class*="st-key-"] > button {{
         border-radius: var(--sb-radius-btn) !important;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
         font-size: 0.88rem !important;
-        font-weight: 500 !important;
-        padding: 0.45rem 0.95rem !important;
-        transition: all 0.15s ease !important;
+        font-weight: 550 !important;
+        min-height: 38px !important;
+        padding: 0.45rem 1rem !important;
+        transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
         letter-spacing: -0.01em !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        user-select: none !important;
+        text-decoration: none !important;
+        outline: none !important;
+    }}
+
+    .stButton > button:focus-visible,
+    div[data-testid="stButton"] > button:focus-visible {{
+        outline: 2px solid var(--sb-primary) !important;
+        outline-offset: 2px !important;
+    }}
+
+    .stButton > button:active,
+    div[data-testid="stButton"] > button:active {{
+        transform: translateY(1px) scale(0.99) !important;
+    }}
+
+    /* Disabled Button State */
+    .stButton > button:disabled,
+    div[data-testid="stButton"] > button:disabled,
+    button[disabled] {{
+        opacity: 0.45 !important;
+        cursor: not-allowed !important;
+        pointer-events: none !important;
+        box-shadow: none !important;
+        filter: grayscale(40%) !important;
     }}
 
     /* Primary Buttons */
@@ -217,19 +248,21 @@ def get_theme_css(theme: str) -> str:
     button[data-testid="baseButton-primary"],
     div.stButton > button[kind="primary"],
     div[data-testid="stButton"] > button[kind="primary"] {{
-        background-color: var(--sb-primary) !important;
+        background: linear-gradient(180deg, var(--sb-primary-hover) 0%, var(--sb-primary) 100%) !important;
         border: 1px solid var(--sb-primary) !important;
         color: #ffffff !important;
         font-weight: 600 !important;
-        box-shadow: 0 1px 2px 0 rgba(67, 56, 202, 0.25) !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+        text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2) !important;
     }}
     button[kind="primary"]:hover,
     button[data-testid="baseButton-primary"]:hover,
     div.stButton > button[kind="primary"]:hover,
     div[data-testid="stButton"] > button[kind="primary"]:hover {{
-        background-color: var(--sb-primary-hover) !important;
+        background: linear-gradient(180deg, var(--sb-primary) 0%, var(--sb-primary-hover) 100%) !important;
         border-color: var(--sb-primary-hover) !important;
         color: #ffffff !important;
+        box-shadow: 0 3px 8px -1px rgba(67, 56, 202, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
     }}
 
     /* Secondary Buttons */
@@ -249,6 +282,7 @@ def get_theme_css(theme: str) -> str:
         background-color: var(--sb-surface-muted) !important;
         border-color: var(--sb-border-strong) !important;
         color: var(--sb-text-main) !important;
+        box-shadow: var(--sb-shadow-md) !important;
     }}
 
     /* Streamlit Form Inputs & Controls */
@@ -428,72 +462,58 @@ def get_theme_css(theme: str) -> str:
     }}
 
     /* Navigation Row Link / Button Styling */
-    .st-key-nav_home button,
-    .st-key-nav_how button,
-    .st-key-nav_feat button,
-    .st-key-nav_practice button,
-    .st-key-nav_studio button,
-    .st-key-nav_about button,
     div[class*="st-key-nav_"]:not([class*="st-key-nav_launch"]) button {{
         border-radius: var(--sb-radius-btn) !important;
         font-size: 0.86rem !important;
         font-weight: 500 !important;
-        padding: 0.45rem 0.75rem !important;
+        min-height: 36px !important;
+        padding: 0.4rem 0.85rem !important;
         transition: all 0.15s ease !important;
         border: 1px solid transparent !important;
         background-color: transparent !important;
         color: var(--sb-text-muted) !important;
         box-shadow: none !important;
     }}
-    .st-key-nav_home button:hover,
-    .st-key-nav_how button:hover,
-    .st-key-nav_feat button:hover,
-    .st-key-nav_practice button:hover,
-    .st-key-nav_studio button:hover,
-    .st-key-nav_about button:hover,
     div[class*="st-key-nav_"]:not([class*="st-key-nav_launch"]) button:hover {{
         background-color: var(--sb-surface-muted) !important;
         color: var(--sb-text-main) !important;
         border-color: var(--sb-border) !important;
     }}
-    .st-key-nav_home button[kind="primary"],
-    .st-key-nav_how button[kind="primary"],
-    .st-key-nav_feat button[kind="primary"],
-    .st-key-nav_practice button[kind="primary"],
-    .st-key-nav_studio button[kind="primary"],
-    .st-key-nav_about button[kind="primary"],
-    .st-key-nav_home button[data-testid="baseButton-primary"],
-    .st-key-nav_how button[data-testid="baseButton-primary"],
-    .st-key-nav_feat button[data-testid="baseButton-primary"],
-    .st-key-nav_practice button[data-testid="baseButton-primary"],
-    .st-key-nav_studio button[data-testid="baseButton-primary"],
-    .st-key-nav_about button[data-testid="baseButton-primary"],
     div[class*="st-key-nav_"]:not([class*="st-key-nav_launch"]) button[kind="primary"],
     div[class*="st-key-nav_"]:not([class*="st-key-nav_launch"]) button[data-testid="baseButton-primary"] {{
         background-color: var(--sb-surface) !important;
+        background-image: none !important;
         color: var(--sb-primary) !important;
-        font-weight: 600 !important;
+        font-weight: 650 !important;
         border: 1px solid var(--sb-border) !important;
-        box-shadow: var(--sb-shadow) !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+        text-shadow: none !important;
     }}
+
+    /* Launch App Primary Navigation CTA */
     .st-key-nav_launch button,
     div[class*="st-key-nav_launch"] button {{
         background-color: var(--sb-primary-light) !important;
+        background-image: none !important;
         color: var(--sb-primary) !important;
-        font-weight: 600 !important;
+        font-weight: 650 !important;
         border: 1px solid var(--sb-primary-border) !important;
+        min-height: 36px !important;
+        padding: 0.4rem 0.95rem !important;
+        text-shadow: none !important;
     }}
     .st-key-nav_launch button:hover,
     div[class*="st-key-nav_launch"] button:hover {{
-        background-color: var(--sb-primary) !important;
+        background: var(--sb-primary) !important;
         color: #ffffff !important;
         border-color: var(--sb-primary) !important;
+        box-shadow: 0 2px 6px rgba(67, 56, 202, 0.3) !important;
     }}
     .st-key-nav_launch button[kind="primary"],
     .st-key-nav_launch button[data-testid="baseButton-primary"],
     div[class*="st-key-nav_launch"] button[kind="primary"],
     div[class*="st-key-nav_launch"] button[data-testid="baseButton-primary"] {{
-        background-color: var(--sb-primary) !important;
+        background: var(--sb-primary) !important;
         color: #ffffff !important;
         border: 1px solid var(--sb-primary-hover) !important;
         box-shadow: 0 1px 3px rgba(67, 56, 202, 0.25) !important;
@@ -506,8 +526,9 @@ def get_theme_css(theme: str) -> str:
         border: 1px solid var(--sb-border) !important;
         color: var(--sb-text-main) !important;
         font-size: 0.82rem !important;
-        font-weight: 500 !important;
-        padding: 0.45rem 0.8rem !important;
+        font-weight: 550 !important;
+        min-height: 36px !important;
+        padding: 0.4rem 0.85rem !important;
         box-shadow: var(--sb-shadow) !important;
     }}
     .st-key-theme_toggle_btn button:hover,
@@ -517,6 +538,9 @@ def get_theme_css(theme: str) -> str:
     }}
 
     /* Live Workspace Interactive Buttons */
+    .st-key-live_add_btn button {{
+        font-weight: 600 !important;
+    }}
     .st-key-live_space button,
     .st-key-live_del button,
     .st-key-live_clear button {{
@@ -524,16 +548,29 @@ def get_theme_css(theme: str) -> str:
         font-weight: 600 !important;
         font-size: 0.86rem !important;
     }}
-    .st-key-live_del button:hover {{
-        color: #ef4444 !important;
-        border-color: rgba(239, 68, 68, 0.4) !important;
-        background-color: rgba(239, 68, 68, 0.06) !important;
-    }}
+    .st-key-live_del button:hover,
     .st-key-live_clear button:hover {{
         color: #ef4444 !important;
-        border-color: rgba(239, 68, 68, 0.4) !important;
-        background-color: rgba(239, 68, 68, 0.06) !important;
+        border-color: rgba(239, 68, 68, 0.45) !important;
+        background-color: rgba(239, 68, 68, 0.08) !important;
     }}
+
+    /* Destructive Confirmation Buttons */
+    .st-key-confirm_clear_yes_btn button {{
+        background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%) !important;
+        border-color: #b91c1c !important;
+        color: #ffffff !important;
+        font-weight: 600 !important;
+        box-shadow: 0 1px 2px rgba(220, 38, 38, 0.25) !important;
+        text-shadow: none !important;
+    }}
+    .st-key-confirm_clear_yes_btn button:hover {{
+        background: #dc2626 !important;
+        border-color: #991b1b !important;
+        box-shadow: 0 3px 6px rgba(220, 38, 38, 0.35) !important;
+    }}
+
+    /* Translate CTA Button */
     .st-key-live_translate_btn button {{
         background-color: var(--sb-primary-light) !important;
         color: var(--sb-primary) !important;
@@ -541,9 +578,33 @@ def get_theme_css(theme: str) -> str:
         border: 1px solid var(--sb-primary-border) !important;
     }}
     .st-key-live_translate_btn button:hover {{
-        background-color: var(--sb-primary) !important;
+        background: var(--sb-primary) !important;
         color: #ffffff !important;
         border-color: var(--sb-primary) !important;
+        box-shadow: 0 2px 6px rgba(67, 56, 202, 0.3) !important;
+    }}
+
+    /* Monospace Key-Cap Buttons (Demo / Simulation Gesture Grid) */
+    div[class*="st-key-demo_sign_"] button {{
+        font-family: 'JetBrains Mono', monospace !important;
+        font-weight: 650 !important;
+        font-size: 0.84rem !important;
+        min-height: 34px !important;
+        padding: 0.3rem 0.45rem !important;
+        background-color: var(--sb-surface) !important;
+        border: 1px solid var(--sb-border) !important;
+        border-bottom: 2px solid var(--sb-border-strong) !important;
+        border-radius: 5px !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+    }}
+    div[class*="st-key-demo_sign_"] button:hover {{
+        background-color: var(--sb-surface-muted) !important;
+        border-color: var(--sb-primary-border) !important;
+        color: var(--sb-primary) !important;
+    }}
+    div[class*="st-key-demo_sign_"] button:active {{
+        transform: translateY(1px) !important;
+        border-bottom-width: 1px !important;
     }}
 
     /* Hero Section */

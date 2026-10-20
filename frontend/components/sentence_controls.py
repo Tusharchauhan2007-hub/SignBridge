@@ -5,10 +5,41 @@ Manages token manipulation, space insertion, backspacing, and vocalization.
 
 from datetime import datetime
 import html
+import json
 import streamlit as st
 from backend.text_to_speech import SentenceBuilder, generate_web_speech_html, speak_pyttsx3
 from backend.translator import EnglishToHindiTranslator
 from frontend.components.translation_card import handle_translation_trigger
+
+
+def copy_to_clipboard(text: str) -> None:
+    """Injects client-side clipboard writer supporting modern navigator.clipboard and fallback."""
+    escaped = json.dumps(text)
+    js = f"""
+    <script>
+    (function() {{
+        var text = {escaped};
+        function fallback() {{
+            var ta = document.createElement("textarea");
+            ta.value = text;
+            ta.style.position = "fixed";
+            ta.style.left = "-9999px";
+            ta.style.top = "-9999px";
+            document.body.appendChild(ta);
+            ta.focus();
+            ta.select();
+            try {{ document.execCommand("copy"); }} catch (e) {{}}
+            document.body.removeChild(ta);
+        }}
+        if (navigator.clipboard && window.isSecureContext) {{
+            navigator.clipboard.writeText(text).catch(fallback);
+        }} else {{
+            fallback();
+        }}
+    }})();
+    </script>
+    """
+    st.components.v1.html(js, height=0)
 
 
 def _cb_add_sign():
@@ -130,7 +161,8 @@ def render_sentence_controls(sb: SentenceBuilder, translator: EnglishToHindiTran
         if st.button("Copy Text", use_container_width=True, key="live_copy"):
             txt = sb.get_text()
             if txt:
-                st.toast(f"Copied: '{txt}'")
+                copy_to_clipboard(txt)
+                st.toast(f"Copied to clipboard: '{txt}'")
             else:
                 st.toast("Sentence is empty.")
     with c_speak:

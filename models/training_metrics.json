@@ -1,11 +1,11 @@
 {
-  "trained_at": "2026-10-17T17:54:16Z",
-  "elapsed_seconds": 0.84,
-  "peak_ram_mb": 192.83,
-  "accuracy": 0.9785932721712538,
-  "precision_macro": 0.9824933687002652,
-  "recall_macro": 0.9860742705570292,
-  "f1_macro": 0.9835664280483974,
+  "trained_at": "2026-10-20T15:48:40Z",
+  "elapsed_seconds": 0.88,
+  "peak_ram_mb": 208.02,
+  "accuracy": 0.9855421686746988,
+  "precision_macro": 0.9848989719957463,
+  "recall_macro": 0.9864523021781086,
+  "f1_macro": 0.9850437900473499,
   "classes": [
     "A",
     "B",
@@ -18,6 +18,7 @@
     "HELLO",
     "HELP",
     "I",
+    "J",
     "K",
     "L",
     "M",
@@ -35,9 +36,10 @@
     "W",
     "X",
     "Y",
-    "YES"
+    "YES",
+    "Z"
   ],
   "split_strategy": "stratified",
-  "total_samples": 1633,
+  "total_samples": 2073,
   "n_estimators": 150
 }
