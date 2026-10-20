@@ -376,8 +376,7 @@ def render_home_page(dataset_mgr: DatasetManager, predictor: SignPredictor) -> N
                     st.session_state.target_letter = chosen_letter
                     st.session_state.target_category = "Alphabet Letters (A–Z)"
                     st.session_state["studio_vocab_cat_radio"] = "Alphabet Letters (A–Z)"
-                    if chosen_letter in ISL_ALPHABET_LETTERS:
-                        st.session_state["studio_target_letter_select"] = ISL_ALPHABET_LETTERS.index(chosen_letter)
+                    st.session_state["studio_target_letter_select"] = chosen_letter
                     st.session_state.active_page = "Studio"
                     st.rerun()
 

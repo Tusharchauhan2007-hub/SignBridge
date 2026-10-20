@@ -49,34 +49,43 @@ def render_studio_page(
     # Sub-Tab 1: Dataset Collection
     with tab_data:
         col_d_left, col_d_right = st.columns([1.1, 1.4], gap="large")
-    
+
         with col_d_left:
             st.markdown("### Target Sign Selection")
-            
+
             cat_opts = ["Alphabet Letters (A–Z)", "Core ISL Gestures", "Custom Label"]
             cat_default_idx = 0
-            if st.session_state.target_category in cat_opts:
+            if st.session_state.get("target_category") in cat_opts:
                 cat_default_idx = cat_opts.index(st.session_state.target_category)
-    
+
             vocab_cat = st.radio(
                 "Category",
                 cat_opts,
                 index=cat_default_idx,
                 horizontal=True,
-                key="studio_vocab_cat_radio"
+                key="studio_vocab_cat_radio",
             )
             st.session_state.target_category = vocab_cat
-    
+
             counts_dict = class_counts
             active_model_classes = set(predictor.classes) if predictor.is_loaded else set()
-    
-            if vocab_cat == "Alphabet Letters (A–Z)":
-                default_let_idx = 0
-                if st.session_state.target_letter in ISL_ALPHABET_LETTERS:
-                    default_let_idx = ISL_ALPHABET_LETTERS.index(st.session_state.target_letter)
 
-                opts = []
-                for l in ISL_ALPHABET_LETTERS:
+            if vocab_cat == "Alphabet Letters (A–Z)":
+                if st.session_state.get("target_letter") not in ISL_ALPHABET_LETTERS:
+                    st.session_state.target_letter = "A"
+
+                if "studio_target_letter_select" not in st.session_state or st.session_state["studio_target_letter_select"] not in ISL_ALPHABET_LETTERS:
+                    st.session_state["studio_target_letter_select"] = st.session_state.target_letter
+
+                def _on_studio_target_letter_change():
+                    new_val = st.session_state.get("studio_target_letter_select")
+                    if new_val in ISL_ALPHABET_LETTERS:
+                        st.session_state.target_letter = new_val
+
+                curr_letter = st.session_state["studio_target_letter_select"]
+                curr_idx = ISL_ALPHABET_LETTERS.index(curr_letter) if curr_letter in ISL_ALPHABET_LETTERS else 0
+
+                def _fmt_letter(l: str) -> str:
                     cnt = counts_dict.get(l, 0)
                     if l in active_model_classes:
                         st_txt = "Active"
@@ -84,82 +93,89 @@ def render_studio_page(
                         st_txt = "Ready to train"
                     else:
                         st_txt = "Needs data"
-                    opts.append(f"{l} — {st_txt} ({cnt} samples)")
+                    return f"{l} — {st_txt} ({cnt} samples)"
 
-                # Keep selectbox widget state in sync with external state updates
-                if "studio_target_letter_select" in st.session_state:
-                    if st.session_state.target_letter in ISL_ALPHABET_LETTERS:
-                        curr_sel = st.session_state["studio_target_letter_select"]
-                        if curr_sel < len(ISL_ALPHABET_LETTERS) and ISL_ALPHABET_LETTERS[curr_sel] != st.session_state.target_letter:
-                            st.session_state["studio_target_letter_select"] = default_let_idx
-                else:
-                    st.session_state["studio_target_letter_select"] = default_let_idx
-
-                sel_idx = st.selectbox(
+                sel_letter = st.selectbox(
                     "Select Target Letter (A–Z)",
-                    range(len(ISL_ALPHABET_LETTERS)),
-                    index=default_let_idx,
-                    format_func=lambda i: opts[i],
+                    options=ISL_ALPHABET_LETTERS,
+                    index=curr_idx,
+                    format_func=_fmt_letter,
                     key="studio_target_letter_select",
+                    on_change=_on_studio_target_letter_change,
                 )
-                target_sign = ISL_ALPHABET_LETTERS[sel_idx]
+                target_sign = sel_letter
                 st.session_state.target_letter = target_sign
-    
+
             elif vocab_cat == "Core ISL Gestures":
-                opts = []
-                for g in CORE_ISL_GESTURES:
+                if st.session_state.get("studio_core_gesture_select") not in CORE_ISL_GESTURES:
+                    st.session_state["studio_core_gesture_select"] = CORE_ISL_GESTURES[0]
+
+                def _on_core_gesture_change():
+                    new_g = st.session_state.get("studio_core_gesture_select")
+                    if new_g in CORE_ISL_GESTURES:
+                        st.session_state.target_gesture = new_g
+
+                curr_g = st.session_state["studio_core_gesture_select"]
+                curr_g_idx = CORE_ISL_GESTURES.index(curr_g) if curr_g in CORE_ISL_GESTURES else 0
+
+                def _fmt_gesture(g: str) -> str:
                     cnt = counts_dict.get(g, 0)
                     st_txt = "Active" if g in active_model_classes else ("Ready" if cnt > 0 else "Needs data")
-                    opts.append(f"{g} — {st_txt} ({cnt} samples)")
-    
-                sel_idx = st.selectbox(
+                    return f"{g} — {st_txt} ({cnt} samples)"
+
+                sel_gesture = st.selectbox(
                     "Select Core Gesture",
-                    range(len(CORE_ISL_GESTURES)),
-                    format_func=lambda i: opts[i],
-                    key="studio_core_gesture_select"
+                    options=CORE_ISL_GESTURES,
+                    index=curr_g_idx,
+                    format_func=_fmt_gesture,
+                    key="studio_core_gesture_select",
+                    on_change=_on_core_gesture_change,
                 )
-                target_sign = CORE_ISL_GESTURES[sel_idx]
+                target_sign = sel_gesture
             else:
-                target_sign = st.text_input("Custom Sign Label:").strip().upper()
-    
-            sample_count = counts_dict.get(target_sign, 0)
-    
+                target_sign = st.text_input("Custom Sign Label:", key="studio_custom_label_input").strip().upper()
+
+            sample_count = counts_dict.get(target_sign, 0) if target_sign else 0
+
             # Prominent Letter / Sign Display Card with ISL Posture Guidance
-            guide_info = ISL_ALPHABET_GUIDE.get(target_sign, None)
-            
-            if target_sign in active_model_classes:
+            guide_info = ISL_ALPHABET_GUIDE.get(target_sign, None) if target_sign else None
+
+            if not target_sign:
+                status_badge = "<span class='sb-matrix-badge-needs' style='font-size:0.75rem; padding:3px 7px;'>⚠️ No Label Specified</span>"
+            elif target_sign in active_model_classes:
                 status_badge = "<span class='sb-matrix-badge-active' style='font-size:0.75rem; padding:3px 7px;'>● Active in Classifier</span>"
             elif sample_count > 0:
                 status_badge = f"<span class='sb-matrix-badge-ready' style='font-size:0.75rem; padding:3px 7px;'>▲ Ready to Train ({sample_count} samples)</span>"
             else:
                 status_badge = "<span class='sb-matrix-badge-needs' style='font-size:0.75rem; padding:3px 7px;'>○ Needs Data (0 samples)</span>"
-    
+
             motion_alert = ""
             if guide_info and "motion" in guide_info and "Note" in guide_info["motion"]:
                 motion_alert = f"<div style='font-size:0.8rem; color:var(--sb-warning); background:var(--sb-warning-bg); padding:6px 10px; border-radius:4px; border:1px solid var(--sb-warning-border); margin-top:0.4rem;'>⚠️ <strong>Movement Note:</strong> {guide_info['motion']}</div>"
-    
+
+            display_heading = target_sign if target_sign else "—"
             st.markdown(
                 f"""
                 <div class="sb-callout" style="margin-top:1rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-                        <span style="font-size:2.5rem; font-weight:800; color:var(--sb-primary); font-family:'JetBrains Mono',monospace;">{target_sign}</span>
+                        <span style="font-size:2.5rem; font-weight:800; color:var(--sb-primary); font-family:'JetBrains Mono',monospace;">{display_heading}</span>
                         <div>{status_badge}</div>
                     </div>
                     <div style="font-size:0.88rem; color:var(--sb-text-main); font-weight:600; margin-bottom:0.25rem;">
                         ISL Posture Guide:
                     </div>
                     <div style="font-size:0.85rem; color:var(--sb-text-muted); line-height:1.5; margin-bottom:0.6rem;">
-                        {guide_info['posture'] if guide_info else 'Maintain the verified static hand posture for this sign.'}
+                        {guide_info['posture'] if guide_info else ('Maintain the verified static hand posture for this sign.' if target_sign else 'Please select an alphabet letter or enter a custom label.')}
                     </div>
                     <div style="font-size:0.82rem; color:var(--sb-primary); background:var(--sb-primary-light); padding:6px 10px; border-radius:4px; border:1px solid var(--sb-primary-border);">
-                        💡 <strong>Camera Guidance:</strong> {guide_info['tips'] if guide_info else 'Keep hand clearly visible in the center of the webcam frame.'}
+                        💡 <strong>Camera Guidance:</strong> {guide_info['tips'] if guide_info else ('Keep hand clearly visible in the center of the webcam frame.' if target_sign else 'Camera recording will be enabled once a valid sign is chosen.')}
                     </div>
                     {motion_alert}
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
-    
+
             # Metadata settings
             st.markdown("<div style='height:0.8rem;'></div>", unsafe_allow_html=True)
             c_sess1, c_sess2 = st.columns(2)
@@ -167,21 +183,22 @@ def render_studio_page(
                 sess_id = st.text_input("Session ID", value=f"session_{datetime.now().strftime('%m%d_%H%M')}")
             with c_sess2:
                 user_id = st.text_input("Signer ID", value="signer_1")
-    
+
             # Data Management (Deletion with Confirmation)
             st.markdown("<div style='height:0.8rem;'></div>", unsafe_allow_html=True)
-            with st.expander(f"Manage Data for '{target_sign}'"):
+            with st.expander(f"Manage Data for '{target_sign}'" if target_sign else "Manage Data"):
                 st.write(f"Current sample count for **`{target_sign}`**: **{sample_count}**")
                 confirm_del = st.checkbox(
                     f"I confirm that I want to delete all {sample_count} samples for '{target_sign}'.",
                     key=f"confirm_del_box_{target_sign}",
+                    disabled=not bool(target_sign and sample_count > 0),
                 )
                 if st.button(f"Delete All '{target_sign}' Samples", type="secondary", disabled=not (confirm_del and sample_count > 0), key=f"btn_del_{target_sign}"):
                     del_n = dataset_mgr.delete_samples_for_label(target_sign)
                     st.success(f"Deleted {del_n} samples for '{target_sign}'.")
                     time.sleep(0.4)
                     st.rerun()
-    
+
         with col_d_right:
             st.markdown("### Webcam Data Recorder")
             st.markdown(
@@ -192,30 +209,58 @@ def render_studio_page(
                 """,
                 unsafe_allow_html=True,
             )
-    
+
+            # Prominently display the active target sign near the recorder controls
+            if target_sign:
+                st.markdown(
+                    f"""
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--sb-surface-muted); border:1px solid var(--sb-border); border-left:4px solid var(--sb-primary); border-radius:6px; padding:0.65rem 0.95rem; margin-bottom:0.85rem;">
+                        <div>
+                            <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--sb-text-subtle);">Active Recording Label</div>
+                            <div style="font-size:1.45rem; font-weight:800; color:var(--sb-primary); font-family:'JetBrains Mono',monospace;">{target_sign}</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--sb-text-subtle);">Samples in Dataset</div>
+                            <div style="font-size:1.15rem; font-weight:700; color:var(--sb-text-main); font-family:'JetBrains Mono',monospace;">{sample_count}</div>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.warning("⚠️ No target sign selected. Please select an alphabet letter or enter a custom label before recording.")
+
             c_ctrl1, c_ctrl2, c_ctrl3 = st.columns([1.2, 1, 1])
             with c_ctrl1:
-                c_burst = st.button("Capture 10 Samples (Burst)", type="primary", use_container_width=True, key="d_burst")
+                c_burst = st.button("Capture 10 Samples (Burst)", type="primary", use_container_width=True, key="d_burst", disabled=not bool(target_sign))
             with c_ctrl2:
-                c_single = st.button("Capture 1 Sample", use_container_width=True, key="d_single")
+                c_single = st.button("Capture 1 Sample", use_container_width=True, key="d_single", disabled=not bool(target_sign))
             with c_ctrl3:
                 c_preview = st.toggle("Camera Preview", value=False, key="d_open")
-    
+
             cap_holder = st.empty()
             recorder_status = st.empty()
-    
+
+            # Display notification banner if samples were just captured in previous run
+            if "last_recorded_target" in st.session_state:
+                just_saved_target = st.session_state.pop("last_recorded_target")
+                just_saved_count = st.session_state.pop("last_recorded_count", 0)
+                tot_for_target = counts_dict.get(just_saved_target, 0)
+                recorder_status.success(f"✅ Successfully saved {just_saved_count} sample(s) labeled as **`{just_saved_target}`** (Total in dataset: **{tot_for_target}**).")
+
             # 1. Burst Capture (10 samples)
             if c_burst:
                 if not target_sign:
-                    st.warning("Please specify a target sign label before recording.")
+                    recorder_status.error("⚠️ Cannot record: no sign label is selected. Please choose a letter first.")
                 else:
-                    with st.spinner(f"Opening camera to capture 10 samples for '{target_sign}'..."):
+                    active_label_to_save = target_sign  # Freeze label at exact moment of capture
+                    with st.spinner(f"Opening camera to capture 10 samples for '{active_label_to_save}'..."):
                         cap_capture = cv2.VideoCapture(0, cv2.CAP_DSHOW)
                         if not cap_capture.isOpened():
                             cap_capture = cv2.VideoCapture(0)
                         if not cap_capture.isOpened():
                             cap_capture = cv2.VideoCapture(1)
-    
+
                         if not cap_capture.isOpened():
                             recorder_status.error("Could not access webcam for data capture. Check camera permissions.")
                         else:
@@ -223,8 +268,8 @@ def render_studio_page(
                             cap_capture.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
                             collected_samples = []
                             attempts = 0
-                            p_bar = st.progress(0, text=f"Capturing samples for {target_sign}...")
-    
+                            p_bar = st.progress(0, text=f"Capturing samples for '{active_label_to_save}'...")
+
                             while len(collected_samples) < 10 and attempts < 70:
                                 attempts += 1
                                 r_f, f_raw = cap_capture.read()
@@ -233,29 +278,31 @@ def render_studio_page(
                                     d_res = tracker.detect(f_mir)
                                     ann_f = tracker.draw_landmarks(f_mir, d_res)
                                     cap_holder.image(cv2.cvtColor(ann_f, cv2.COLOR_BGR2RGB), channels="RGB", use_container_width=True)
-    
+
                                     if d_res.has_hand and d_res.hands:
                                         f_vec = preprocessor.extract_from_landmarks(d_res.hands[0].landmarks)
                                         if f_vec is not None:
-                                            collected_samples.append((target_sign, f_vec, sess_id, user_id, "Right"))
-                                            p_bar.progress(len(collected_samples) / 10.0, text=f"Captured {len(collected_samples)}/10 samples...")
+                                            collected_samples.append((active_label_to_save, f_vec, sess_id, user_id, "Right"))
+                                            p_bar.progress(len(collected_samples) / 10.0, text=f"Captured {len(collected_samples)}/10 samples for '{active_label_to_save}'...")
                                 time.sleep(0.12)
-    
+
                             cap_capture.release()
                             if collected_samples:
                                 added_n = dataset_mgr.append_samples_batch(collected_samples)
-                                st.success(f"Successfully recorded and saved {added_n} samples for '{target_sign}'!")
-                                time.sleep(0.5)
+                                st.session_state.last_recorded_target = active_label_to_save
+                                st.session_state.last_recorded_count = added_n
+                                time.sleep(0.3)
                                 st.rerun()
                             else:
                                 recorder_status.warning("No hand detected during capture attempts. Ensure your hand is clearly visible.")
-    
+
             # 2. Single Sample Capture
             elif c_single:
                 if not target_sign:
-                    st.warning("Please specify a target sign label before recording.")
+                    recorder_status.error("⚠️ Cannot record: no sign label is selected. Please choose a letter first.")
                 else:
-                    with st.spinner(f"Capturing single sample for '{target_sign}'..."):
+                    active_label_to_save = target_sign  # Freeze label at exact moment of capture
+                    with st.spinner(f"Capturing single sample for '{active_label_to_save}'..."):
                         cap_s = cv2.VideoCapture(0, cv2.CAP_DSHOW)
                         if not cap_s.isOpened():
                             cap_s = cv2.VideoCapture(0)
@@ -272,15 +319,16 @@ def render_studio_page(
                                 if d_res.has_hand and d_res.hands:
                                     f_vec = preprocessor.extract_from_landmarks(d_res.hands[0].landmarks)
                                     if f_vec is not None:
-                                        dataset_mgr.append_sample(target_sign, f_vec, sess_id, user_id, "Right")
-                                        st.success(f"Saved 1 sample for '{target_sign}'!")
-                                        time.sleep(0.4)
+                                        dataset_mgr.append_sample(active_label_to_save, f_vec, sess_id, user_id, "Right")
+                                        st.session_state.last_recorded_target = active_label_to_save
+                                        st.session_state.last_recorded_count = 1
+                                        time.sleep(0.3)
                                         st.rerun()
                                 else:
                                     recorder_status.warning("No hand detected. Sample was rejected.")
                         else:
                             recorder_status.error("Could not access webcam.")
-    
+
             # 3. Static Live Camera Preview
             elif c_preview:
                 cap_d = cv2.VideoCapture(0, cv2.CAP_DSHOW)
