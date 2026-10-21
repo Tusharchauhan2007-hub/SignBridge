@@ -1,11 +1,11 @@
 {
-  "trained_at": "2026-10-20T15:48:40Z",
-  "elapsed_seconds": 0.88,
-  "peak_ram_mb": 208.02,
-  "accuracy": 0.9855421686746988,
-  "precision_macro": 0.9848989719957463,
-  "recall_macro": 0.9864523021781086,
-  "f1_macro": 0.9850437900473499,
+  "trained_at": "2026-10-21T05:59:22Z",
+  "elapsed_seconds": 0.87,
+  "peak_ram_mb": 0.0,
+  "accuracy": 0.9904534606205251,
+  "precision_macro": 0.9908763094525052,
+  "recall_macro": 0.9949820788530466,
+  "f1_macro": 0.9927084950088604,
   "classes": [
     "A",
     "B",
@@ -40,6 +40,6 @@
     "Z"
   ],
   "split_strategy": "stratified",
-  "total_samples": 2073,
+  "total_samples": 2093,
   "n_estimators": 150
 }
