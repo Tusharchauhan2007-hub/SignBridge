@@ -1,6 +1,7 @@
 """
 Offline Hindi Translation Component for SignBridge.
 Integrates local MarianMT neural translation model with instant copy & dismiss controls.
+Dark-tech card layout with monospace telemetry, language flow, and Devanagari display.
 """
 
 import html
@@ -48,8 +49,13 @@ def render_translation_display() -> None:
             f"""
             <div class="sb-translation-container">
                 <div class="sb-translation-header">
-                    <span class="sb-translation-badge">HINDI (हिंदी अनुवाद)</span>
-                    <span style="font-size:0.74rem; color:var(--sb-text-subtle);">100% Offline • MarianMT</span>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <span class="sb-status-dot sb-dot-ready"></span>
+                        <span class="sb-translation-badge">LOCAL SEQ2SEQ // HINDI (हिंदी)</span>
+                    </div>
+                    <span style="font-family:'JetBrains Mono', monospace; font-size:0.72rem; color:#999999;">
+                        EN ──► HI • 100% OFFLINE MARIANMT
+                    </span>
                 </div>
                 <div class="sb-translation-output">{html.escape(hi_text)}</div>
             </div>
@@ -89,4 +95,3 @@ def handle_translation_trigger(sb: SentenceBuilder, translator: EnglishToHindiTr
                 else:
                     st.session_state.translated_hindi_text = hi_res
                     st.rerun()
-

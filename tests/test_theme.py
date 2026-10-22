@@ -104,3 +104,22 @@ def test_theme_toggle_logic():
     assert st.session_state.theme == "light"
 
 
+def test_light_mode_contrast_and_headings():
+    """Verify that light mode palettes and key headings do not use hardcoded white text."""
+    from frontend.styles.theme import get_theme_css
+
+    light_css = get_theme_css("light")
+    dark_css = get_theme_css("dark")
+
+    # Gradients defined
+    assert "--sb-heading-gradient" in light_css
+    assert "--sb-brand-gradient" in light_css
+    assert "--sb-metric-gradient" in light_css
+
+    # Headings and cards use dynamic theme text variables
+    assert ".sb-hero-title {" in light_css
+    assert "background: var(--sb-heading-gradient)" in light_css
+    assert ".sb-brand-name {" in light_css
+    assert "background: var(--sb-brand-gradient)" in light_css
+    assert ".sb-section-heading {" in light_css
+    assert "color: var(--sb-text-main)" in light_css

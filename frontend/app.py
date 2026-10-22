@@ -1,7 +1,7 @@
 """
 SignBridge — Communication without barriers.
 Main presentation layer entry point built with Streamlit.
-Coordinates UI pages, navigation, styling, and connects to the backend processing pipeline.
+Coordinates UI pages, navigation, styling, session state, and connects to backend processing.
 """
 
 import os
@@ -56,95 +56,118 @@ from frontend.pages.about import render_about_page
 # -----------------------------------------------------------------------------
 # Streamlit Application Page Configuration
 # -----------------------------------------------------------------------------
-st.set_page_config(
-    page_title="SignBridge — Communication without barriers",
-    page_icon="✋",
-    layout="wide",
-    initial_sidebar_state="collapsed",
-)
+try:
+    st.set_page_config(
+        page_title="SignBridge — AI Sign Recognition & Translation",
+        page_icon="✋",
+        layout="wide",
+        initial_sidebar_state="collapsed",
+    )
+except Exception:
+    pass
 
-# -----------------------------------------------------------------------------
-# Theme State Initialization (Support URL query params & session state persistence)
-# -----------------------------------------------------------------------------
+
+def init_app_session_state() -> str:
+    """Initialize theme, all session state variables, and inject active theme CSS on every rerun."""
+    # 1. Theme State Initialization with "dark" default
+    if "theme" not in st.session_state:
+        try:
+            q_theme = st.query_params.get("theme", None)
+            st.session_state.theme = q_theme if q_theme in ("light", "dark") else "dark"
+        except Exception:
+            st.session_state.theme = "dark"
+
+    # Synchronize query parameter with session state
+    try:
+        if st.query_params.get("theme") != st.session_state.theme:
+            st.query_params["theme"] = st.session_state.theme
+    except Exception:
+        pass
+
+    active_theme = st.session_state.get("theme", "dark")
+
+    # 2. Inject dynamic CSS design system on every execution pass
+    st.markdown(get_theme_css(active_theme), unsafe_allow_html=True)
+
+    # 3. Application State Variables
+    if "sentence_builder" not in st.session_state:
+        st.session_state.sentence_builder = SentenceBuilder(cooldown_seconds=1.2)
+
+    if "tts_trigger_html" not in st.session_state:
+        st.session_state.tts_trigger_html = ""
+
+    if "manual_text_input" not in st.session_state:
+        st.session_state.manual_text_input = ""
+
+    if "active_page" not in st.session_state:
+        st.session_state.active_page = "Home"
+
+    if "target_letter" not in st.session_state:
+        st.session_state.target_letter = "A"
+
+    if "target_category" not in st.session_state:
+        st.session_state.target_category = "Alphabet Letters (A–Z)"
+
+    if "last_recognized_sign" not in st.session_state:
+        st.session_state.last_recognized_sign = None
+
+    if "translated_hindi_text" not in st.session_state:
+        st.session_state.translated_hindi_text = ""
+
+    if "live_webcam_cap" not in st.session_state:
+        st.session_state.live_webcam_cap = None
+
+    if "show_onboarding" not in st.session_state:
+        st.session_state.show_onboarding = True
+
+    if "recognition_history" not in st.session_state:
+        st.session_state.recognition_history = []
+
+    if "practice_target" not in st.session_state:
+        st.session_state.practice_target = "A"
+
+    if "practice_matches" not in st.session_state:
+        st.session_state.practice_matches = 0
+
+    if "confirm_clear" not in st.session_state:
+        st.session_state.confirm_clear = False
+
+    if "text_font_size" not in st.session_state:
+        st.session_state.text_font_size = "Large"
+
+    if "camera_source_idx" not in st.session_state:
+        st.session_state.camera_source_idx = 0
+
+    if "demo_mode_active" not in st.session_state:
+        st.session_state.demo_mode_active = False
+
+    if "last_added_sign_flash" not in st.session_state:
+        st.session_state.last_added_sign_flash = ""
+
+    if "live_mode_view" not in st.session_state:
+        st.session_state.live_mode_view = "Live Recognition"
+
+    if "live_mode_selector" not in st.session_state:
+        st.session_state.live_mode_selector = "Live Recognition"
+
+    return active_theme
+
+
+# Ensure theme initialization runs at module import as well for backwards compatibility
 if "theme" not in st.session_state:
     try:
         q_theme = st.query_params.get("theme", None)
-        st.session_state.theme = q_theme if q_theme in ("light", "dark") else "light"
+        st.session_state.theme = q_theme if q_theme in ("light", "dark") else "dark"
     except Exception:
-        st.session_state.theme = "light"
+        st.session_state.theme = "dark"
 
-# Keep query parameter synchronized with session state
 try:
     if st.query_params.get("theme") != st.session_state.theme:
         st.query_params["theme"] = st.session_state.theme
 except Exception:
     pass
 
-# Inject dynamic CSS design system
-st.markdown(get_theme_css(st.session_state.theme), unsafe_allow_html=True)
-
-# -----------------------------------------------------------------------------
-# Session State Initialization
-# -----------------------------------------------------------------------------
-if "sentence_builder" not in st.session_state:
-    st.session_state.sentence_builder = SentenceBuilder(cooldown_seconds=1.2)
-
-if "tts_trigger_html" not in st.session_state:
-    st.session_state.tts_trigger_html = ""
-
-if "manual_text_input" not in st.session_state:
-    st.session_state.manual_text_input = ""
-
-if "active_page" not in st.session_state:
-    st.session_state.active_page = "Home"
-
-if "target_letter" not in st.session_state:
-    st.session_state.target_letter = "A"
-
-if "target_category" not in st.session_state:
-    st.session_state.target_category = "Alphabet Letters (A–Z)"
-
-if "last_recognized_sign" not in st.session_state:
-    st.session_state.last_recognized_sign = None
-
-if "translated_hindi_text" not in st.session_state:
-    st.session_state.translated_hindi_text = ""
-
-if "live_webcam_cap" not in st.session_state:
-    st.session_state.live_webcam_cap = None
-
-if "show_onboarding" not in st.session_state:
-    st.session_state.show_onboarding = True
-
-if "recognition_history" not in st.session_state:
-    st.session_state.recognition_history = []
-
-if "practice_target" not in st.session_state:
-    st.session_state.practice_target = "A"
-
-if "practice_matches" not in st.session_state:
-    st.session_state.practice_matches = 0
-
-if "confirm_clear" not in st.session_state:
-    st.session_state.confirm_clear = False
-
-if "text_font_size" not in st.session_state:
-    st.session_state.text_font_size = "Large"
-
-if "camera_source_idx" not in st.session_state:
-    st.session_state.camera_source_idx = 0
-
-if "demo_mode_active" not in st.session_state:
-    st.session_state.demo_mode_active = False
-
-if "last_added_sign_flash" not in st.session_state:
-    st.session_state.last_added_sign_flash = ""
-
-if "live_mode_view" not in st.session_state:
-    st.session_state.live_mode_view = "Live Recognition"
-
-if "live_mode_selector" not in st.session_state:
-    st.session_state.live_mode_selector = "Live Recognition"
+st.markdown(get_theme_css(st.session_state.get("theme", "dark")), unsafe_allow_html=True)
 
 
 # -----------------------------------------------------------------------------
@@ -182,6 +205,9 @@ def get_translator() -> EnglishToHindiTranslator:
 
 def main() -> None:
     """Main presentation router executing active page."""
+    # Guarantees theme and session state exist on every rerun pass
+    init_app_session_state()
+
     dataset_mgr = get_dataset_manager()
     predictor = get_predictor()
 
@@ -216,5 +242,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
-

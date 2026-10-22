@@ -1,7 +1,7 @@
 """
-Studio page for SignBridge: Dataset Collection & Model Training.
-Enables collecting labeled hand landmarks, viewing alphabet coverage,
-and training local Random Forest models.
+Studio page for SignBridge: Dataset Collection, Model Training, and Custom Commands.
+Enables collecting labeled hand landmarks, viewing alphabet coverage, training local
+Random Forest models, and managing custom gesture commands and macro actions.
 """
 from datetime import datetime
 import time
@@ -21,6 +21,8 @@ from backend.hand_tracking import HandTracker
 from backend.predictor import SignPredictor
 from backend.preprocessing import LandmarkPreprocessor
 from backend.train_model import ModelTrainer
+from backend.text_to_speech import speak_pyttsx3
+from frontend.utils.command_manager import CustomCommandManager
 
 
 def render_studio_page(
@@ -29,13 +31,13 @@ def render_studio_page(
     tracker: HandTracker,
     predictor: SignPredictor,
 ) -> None:
-    """Renders the dataset collection and model training studio interface."""
+    """Renders the dataset collection, model training, and custom commands studio interface."""
     st.markdown(
         """
-        <div class="sb-section-tag">Machine Learning Operations</div>
+        <div class="sb-section-tag">// MLOPS, DATASET & COMMAND STUDIO</div>
         <h1 class="sb-section-heading">SignBridge Studio</h1>
         <p class="sb-section-desc">
-            Collect verified hand landmark coordinates, evaluate dataset integrity, and train custom Random Forest models.
+            Collect verified hand landmark coordinates, evaluate dataset integrity, train local Random Forest models, and configure personal gesture commands.
         </p>
         """,
         unsafe_allow_html=True,
@@ -43,10 +45,17 @@ def render_studio_page(
     
     class_counts = dataset_mgr.get_class_counts()
     total_samples = sum(class_counts.values())
+    cmd_mgr = CustomCommandManager()
 
-    tab_data, tab_train = st.tabs(["1. Dataset Collection (A–Z & Gestures)", "2. Model Training & Evaluation"])
+    tab_data, tab_train, tab_cmd = st.tabs([
+        "1. Dataset Collection (A–Z & Gestures)",
+        "2. Model Training & Evaluation",
+        "3. Custom Manual Commands & Macro Actions",
+    ])
     
+    # =========================================================================
     # Sub-Tab 1: Dataset Collection
+    # =========================================================================
     with tab_data:
         col_d_left, col_d_right = st.columns([1.1, 1.4], gap="large")
 
@@ -151,14 +160,14 @@ def render_studio_page(
 
             motion_alert = ""
             if guide_info and "motion" in guide_info and "Note" in guide_info["motion"]:
-                motion_alert = f"<div style='font-size:0.8rem; color:var(--sb-warning); background:var(--sb-warning-bg); padding:6px 10px; border-radius:4px; border:1px solid var(--sb-warning-border); margin-top:0.4rem;'>⚠️ <strong>Movement Note:</strong> {guide_info['motion']}</div>"
+                motion_alert = f"<div style='font-size:0.8rem; color:var(--sb-warning); background:var(--sb-warning-bg); padding:6px 10px; border-radius:6px; border:1px solid var(--sb-warning-border); margin-top:0.4rem;'>⚠️ <strong>Movement Note:</strong> {guide_info['motion']}</div>"
 
             display_heading = target_sign if target_sign else "—"
             st.markdown(
                 f"""
                 <div class="sb-callout" style="margin-top:1rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.75rem;">
-                        <span style="font-size:2.5rem; font-weight:800; color:var(--sb-primary); font-family:'JetBrains Mono',monospace;">{display_heading}</span>
+                        <span style="font-size:2.5rem; font-weight:800; color:var(--sb-primary-hover); font-family:'JetBrains Mono',monospace;">{display_heading}</span>
                         <div>{status_badge}</div>
                     </div>
                     <div style="font-size:0.88rem; color:var(--sb-text-main); font-weight:600; margin-bottom:0.25rem;">
@@ -167,7 +176,7 @@ def render_studio_page(
                     <div style="font-size:0.85rem; color:var(--sb-text-muted); line-height:1.5; margin-bottom:0.6rem;">
                         {guide_info['posture'] if guide_info else ('Maintain the verified static hand posture for this sign.' if target_sign else 'Please select an alphabet letter or enter a custom label.')}
                     </div>
-                    <div style="font-size:0.82rem; color:var(--sb-primary); background:var(--sb-primary-light); padding:6px 10px; border-radius:4px; border:1px solid var(--sb-primary-border);">
+                    <div style="font-size:0.82rem; color:var(--sb-primary-hover); background:var(--sb-primary-light); padding:8px 12px; border-radius:6px; border:1px solid var(--sb-primary-border);">
                         💡 <strong>Camera Guidance:</strong> {guide_info['tips'] if guide_info else ('Keep hand clearly visible in the center of the webcam frame.' if target_sign else 'Camera recording will be enabled once a valid sign is chosen.')}
                     </div>
                     {motion_alert}
@@ -210,18 +219,18 @@ def render_studio_page(
                 unsafe_allow_html=True,
             )
 
-            # Prominently display the active target sign near the recorder controls
+            # Prominently display active target sign near recorder controls
             if target_sign:
                 st.markdown(
                     f"""
-                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--sb-surface-muted); border:1px solid var(--sb-border); border-left:4px solid var(--sb-primary); border-radius:6px; padding:0.65rem 0.95rem; margin-bottom:0.85rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; background:var(--sb-surface-muted); border:1px solid var(--sb-border); border-left:4px solid var(--sb-primary); border-radius:8px; padding:0.75rem 1rem; margin-bottom:0.85rem;">
                         <div>
                             <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--sb-text-subtle);">Active Recording Label</div>
-                            <div style="font-size:1.45rem; font-weight:800; color:var(--sb-primary); font-family:'JetBrains Mono',monospace;">{target_sign}</div>
+                            <div style="font-size:1.55rem; font-weight:800; color:var(--sb-primary-hover); font-family:'JetBrains Mono',monospace;">{target_sign}</div>
                         </div>
                         <div style="text-align:right;">
                             <div style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--sb-text-subtle);">Samples in Dataset</div>
-                            <div style="font-size:1.15rem; font-weight:700; color:var(--sb-text-main); font-family:'JetBrains Mono',monospace;">{sample_count}</div>
+                            <div style="font-size:1.25rem; font-weight:700; color:var(--sb-text-main); font-family:'JetBrains Mono',monospace;">{sample_count}</div>
                         </div>
                     </div>
                     """,
@@ -241,7 +250,7 @@ def render_studio_page(
             cap_holder = st.empty()
             recorder_status = st.empty()
 
-            # Display notification banner if samples were just captured in previous run
+            # Notification banner if samples were recorded in previous run
             if "last_recorded_target" in st.session_state:
                 just_saved_target = st.session_state.pop("last_recorded_target")
                 just_saved_count = st.session_state.pop("last_recorded_count", 0)
@@ -253,7 +262,7 @@ def render_studio_page(
                 if not target_sign:
                     recorder_status.error("⚠️ Cannot record: no sign label is selected. Please choose a letter first.")
                 else:
-                    active_label_to_save = target_sign  # Freeze label at exact moment of capture
+                    active_label_to_save = target_sign
                     with st.spinner(f"Opening camera to capture 10 samples for '{active_label_to_save}'..."):
                         cap_capture = cv2.VideoCapture(0, cv2.CAP_DSHOW)
                         if not cap_capture.isOpened():
@@ -301,7 +310,7 @@ def render_studio_page(
                 if not target_sign:
                     recorder_status.error("⚠️ Cannot record: no sign label is selected. Please choose a letter first.")
                 else:
-                    active_label_to_save = target_sign  # Freeze label at exact moment of capture
+                    active_label_to_save = target_sign
                     with st.spinner(f"Capturing single sample for '{active_label_to_save}'..."):
                         cap_s = cv2.VideoCapture(0, cv2.CAP_DSHOW)
                         if not cap_s.isOpened():
@@ -362,7 +371,9 @@ def render_studio_page(
                 unsafe_allow_html=True,
             )
     
+    # =========================================================================
     # Sub-Tab 2: Model Training & Evaluation
+    # =========================================================================
     with tab_train:
         st.markdown("### Random Forest Classifier Training Pipeline")
         st.markdown(
@@ -420,5 +431,169 @@ def render_studio_page(
     
                 except Exception as ex:
                     st.error(f"Training failed: {ex}")
-    
-    
+
+    # =========================================================================
+    # Sub-Tab 3: Custom Manual Commands & Macro Actions
+    # =========================================================================
+    with tab_cmd:
+        st.markdown(
+            """
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:1rem;">
+                <div>
+                    <h3 style="margin:0; font-size:1.35rem; color:var(--sb-text-main);">Personal Gesture Automation & Macro Actions</h3>
+                    <div style="font-size:0.86rem; color:var(--sb-text-muted); margin-top:0.25rem;">
+                        Assign custom spoken phrases, emergency calls, or multi-lingual actions triggered whenever a specific sign is recognized.
+                    </div>
+                </div>
+                <div class="sb-status-chip">
+                    <span class="sb-status-dot sb-dot-active"></span>
+                    <span>LOCAL JSON STORAGE</span>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        all_commands = cmd_mgr.load_commands()
+        active_cmd_count = sum(1 for c in all_commands if c.get("enabled", True))
+
+        # Metrics overview bar
+        c_m1, c_m2, c_m3 = st.columns(3)
+        with c_m1:
+            st.metric("Total Configured Macros", len(all_commands))
+        with c_m2:
+            st.metric("Active & Armed", active_cmd_count)
+        with c_m3:
+            st.metric("Storage Engine", "Local JSON (Private)")
+
+        st.markdown("<hr style='margin:1.25rem 0;'>", unsafe_allow_html=True)
+
+        col_cmd_list, col_cmd_new = st.columns([1.35, 1], gap="large")
+
+        with col_cmd_list:
+            st.markdown("### Configured Commands")
+            if not all_commands:
+                st.info("No custom commands currently configured. Use the form on the right to create your first gesture macro.")
+            else:
+                for cmd in all_commands:
+                    cmd_id = cmd.get("id")
+                    cmd_name = cmd.get("name", "Unnamed Command")
+                    trigger = cmd.get("trigger", "—")
+                    act_type = cmd.get("action_type", "Vocalize Speech")
+                    payload = cmd.get("payload", "")
+                    enabled = cmd.get("enabled", True)
+                    desc = cmd.get("description", "")
+
+                    status_dot = "sb-dot-ready" if enabled else "sb-dot-neutral"
+                    status_text = "ARMED // ACTIVE" if enabled else "DISABLED"
+
+                    st.markdown(
+                        f"""
+                        <div class="sb-command-card">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.6rem;">
+                                <div>
+                                    <div style="font-size:1.1rem; font-weight:700; color:var(--sb-text-main);">{cmd_name}</div>
+                                    <div style="font-size:0.8rem; color:var(--sb-text-muted); margin-top:2px;">{desc}</div>
+                                </div>
+                                <div class="sb-status-chip" style="font-size:0.68rem; padding:2px 8px;">
+                                    <span class="sb-status-dot {status_dot}"></span>
+                                    <span>{status_text}</span>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.75rem;">
+                                <span class="sb-brand-badge" style="background:rgba(99,102,241,0.18); color:#818cf8; border-color:rgba(99,102,241,0.35);">
+                                    ⚡ TRIGGER: {trigger}
+                                </span>
+                                <span class="sb-brand-badge" style="background:rgba(6,182,212,0.15); color:#06b6d4; border-color:rgba(6,182,212,0.3);">
+                                    {act_type}
+                                </span>
+                            </div>
+                            <div style="background:rgba(8,11,20,0.8); border:1px solid var(--sb-border); border-radius:6px; padding:0.6rem 0.85rem; font-family:'JetBrains Mono',monospace; font-size:0.82rem; color:var(--sb-text-main); margin-bottom:0.85rem;">
+                                💬 "{payload}"
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                    # Command card action buttons
+                    btn_c1, btn_c2, btn_c3 = st.columns([1.1, 1.1, 1.2])
+                    with btn_c1:
+                        if st.button("🔊 Test Voice", key=f"test_cmd_{cmd_id}", use_container_width=True):
+                            speak_pyttsx3(payload)
+                            st.toast(f"Executed: \"{payload}\"", icon="🔊")
+                    with btn_c2:
+                        toggle_lbl = "Disable" if enabled else "Enable"
+                        if st.button(toggle_lbl, key=f"toggle_cmd_{cmd_id}", use_container_width=True):
+                            cmd_mgr.toggle_command(cmd_id)
+                            st.rerun()
+                    with btn_c3:
+                        with st.popover("Delete"):
+                            st.write(f"Delete **'{cmd_name}'**?")
+                            if st.button("Confirm Delete", key=f"del_confirm_{cmd_id}", type="primary", use_container_width=True):
+                                cmd_mgr.delete_command(cmd_id)
+                                st.rerun()
+
+                    st.markdown("<div style='height:0.5rem;'></div>", unsafe_allow_html=True)
+
+        with col_cmd_new:
+            st.markdown("### Create New Gesture Command")
+            st.markdown(
+                """
+                <div style="font-size:0.84rem; color:var(--sb-text-muted); margin-bottom:1rem;">
+                    Link a recognized hand sign to an immediate verbal sentence or emergency notification.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            with st.form("create_custom_command_form", clear_on_submit=True):
+                new_name = st.text_input("Command Name", placeholder="e.g. Call for Water or Medical Alert")
+
+                # Select trigger sign: core gestures first, then alphabet letters
+                trigger_options = CORE_ISL_GESTURES + ISL_ALPHABET_LETTERS
+                new_trigger = st.selectbox(
+                    "Trigger Sign Gesture or Letter",
+                    options=trigger_options,
+                    index=0,
+                    help="When this gesture is recognized with high confidence, the action will be triggered.",
+                )
+
+                new_action = st.selectbox(
+                    "Macro Action Type",
+                    options=[
+                        "Vocalize Speech",
+                        "Translate to Hindi & Speak",
+                        "Emergency Alarm & Vocalize",
+                        "Insert Custom Sentence",
+                    ],
+                    index=0,
+                )
+
+                new_payload = st.text_area(
+                    "Spoken Message / Text Response",
+                    placeholder="Enter the full sentence to vocalize (e.g. 'Excuse me, could you please give me a glass of water?')...",
+                    height=95,
+                )
+
+                new_desc = st.text_input(
+                    "Description (Optional)",
+                    placeholder="e.g. Asks for drinking water in public settings",
+                )
+
+                create_submitted = st.form_submit_button("Create Custom Command ⚡", type="primary", use_container_width=True)
+                if create_submitted:
+                    success, msg = cmd_mgr.add_command(
+                        name=new_name,
+                        trigger=new_trigger,
+                        action_type=new_action,
+                        payload=new_payload,
+                        description=new_desc,
+                        enabled=True,
+                    )
+                    if success:
+                        st.success(msg)
+                        time.sleep(0.4)
+                        st.rerun()
+                    else:
+                        st.error(msg)

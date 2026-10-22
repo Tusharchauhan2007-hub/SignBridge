@@ -1,0 +1,42 @@
+[
+  {
+    "id": "cmd_default_help",
+    "name": "Emergency Assistance Call",
+    "trigger": "HELP",
+    "action_type": "Vocalize Speech",
+    "payload": "Emergency: I require immediate assistance, please.",
+    "enabled": true,
+    "created_at": "2026-10-22 09:00:00",
+    "description": "Speaks an urgent assistance request when HELP sign is recognized."
+  },
+  {
+    "id": "cmd_default_hello",
+    "name": "Standard Everyday Greeting",
+    "trigger": "HELLO",
+    "action_type": "Vocalize Speech",
+    "payload": "Hello everyone, hope you are having a wonderful day!",
+    "enabled": true,
+    "created_at": "2026-10-22 09:00:00",
+    "description": "Vocalizes a warm greeting sentence when HELLO gesture is signed."
+  },
+  {
+    "id": "cmd_default_yes",
+    "name": "Confirmation Affirmation",
+    "trigger": "YES",
+    "action_type": "Vocalize Speech",
+    "payload": "Yes, I agree and confirm this choice.",
+    "enabled": true,
+    "created_at": "2026-10-22 09:00:00",
+    "description": "Speaks a clear confirmation sentence when YES is signed."
+  },
+  {
+    "id": "cmd_default_thanks",
+    "name": "Gratitude & Thanks",
+    "trigger": "THANK_YOU",
+    "action_type": "Translate to Hindi & Speak",
+    "payload": "Thank you so much for your kind help and support.",
+    "enabled": true,
+    "created_at": "2026-10-22 09:00:00",
+    "description": "Expresses gratitude and triggers bilingual translation."
+  }
+]

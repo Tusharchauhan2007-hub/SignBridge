@@ -1,6 +1,7 @@
 """
 Sentence composition controls and editing toolbar for SignBridge.
 Manages token manipulation, space insertion, backspacing, and vocalization.
+Dark-tech brutalist buttons with monospace action badges and keyboard indicators.
 """
 
 from datetime import datetime
@@ -90,8 +91,8 @@ def render_sentence_controls(sb: SentenceBuilder, translator: EnglishToHindiTran
     # Action callbacks for instant, atomic updates without breaking camera loops
     st.markdown(
         """
-        <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--sb-text-subtle); margin-top:0.6rem; margin-bottom:0.4rem;">
-            Sentence Editing
+        <div style="font-family:'JetBrains Mono', monospace; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#818cf8; margin-top:0.75rem; margin-bottom:0.4rem;">
+            // SENTENCE BUFFER CONTROLS
         </div>
         """,
         unsafe_allow_html=True,
@@ -133,8 +134,8 @@ def render_sentence_controls(sb: SentenceBuilder, translator: EnglishToHindiTran
     if st.session_state.get("confirm_clear", False):
         st.markdown(
             """
-            <div style="background:var(--sb-warning-bg); border:1px solid var(--sb-warning-border); border-radius:6px; padding:0.65rem 0.85rem; margin-top:0.5rem; margin-bottom:0.5rem;">
-                <span style="font-size:0.82rem; font-weight:600; color:var(--sb-text-main);">Clear entire composed message?</span>
+            <div style="background:#0a0a0a; border:1px solid #ededed; border-radius:0px; padding:0.75rem 1rem; margin-top:0.5rem; margin-bottom:0.5rem;">
+                <span style="font-family:'JetBrains Mono', monospace; font-size:0.8rem; font-weight:600; color:#ededed;">Clear entire composed message?</span>
             </div>
             """,
             unsafe_allow_html=True,
@@ -150,8 +151,8 @@ def render_sentence_controls(sb: SentenceBuilder, translator: EnglishToHindiTran
     # Secondary toolbar: Copy, Speech Vocalization & Offline Hindi Translation
     st.markdown(
         """
-        <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--sb-text-subtle); margin-top:0.9rem; margin-bottom:0.4rem;">
-            Actions & Speech
+        <div style="font-family:'JetBrains Mono', monospace; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#818cf8; margin-top:1rem; margin-bottom:0.4rem;">
+            // VOCALIZATION & NEURAL TRANSLATION
         </div>
         """,
         unsafe_allow_html=True,
@@ -181,4 +182,3 @@ def render_sentence_controls(sb: SentenceBuilder, translator: EnglishToHindiTran
     if st.session_state.tts_trigger_html:
         st.components.v1.html(st.session_state.tts_trigger_html, height=0)
         st.session_state.tts_trigger_html = ""
-

@@ -1,7 +1,8 @@
 """
 Live Recognition Workspace and Interactive Practice Mode for SignBridge.
 Coordinates real-time webcam inference, hand landmark overlay, sentence building,
-offline Hindi translation, speech synthesis, and guided ISL posture training.
+offline Hindi translation, speech synthesis, custom macro actions, and guided ISL posture training.
+Redesigned with the Dark Tech / AI Intelligence presentation system.
 """
 
 from datetime import datetime
@@ -26,6 +27,7 @@ from frontend.components.sentence_controls import (
     _cb_delete,
     _cb_clear,
 )
+from frontend.utils.command_manager import CustomCommandManager
 
 
 def render_live_app_page(
@@ -35,18 +37,46 @@ def render_live_app_page(
     predictor: SignPredictor,
     translator: EnglishToHindiTranslator,
 ) -> None:
-    """Renders the complete SignBridge Live assistive workspace."""
+    """Renders the complete SignBridge Live assistive workspace with Dark Tech styling and Macro commands."""
+    cmd_mgr = CustomCommandManager()
+    active_macros = [c for c in cmd_mgr.load_commands() if c.get("enabled", True)]
+
+    def _execute_macro_if_mapped(trigger_label: str) -> None:
+        """Executes custom command mapped to recognized gesture if active."""
+        cmd = cmd_mgr.get_command_by_trigger(trigger_label)
+        if cmd:
+            st.session_state.last_triggered_macro = cmd
+            act_type = cmd.get("action_type", "Vocalize Speech")
+            payload = cmd.get("payload", "")
+            if "Vocalize" in act_type or "Emergency" in act_type:
+                speak_pyttsx3(payload)
+            elif "Translate" in act_type:
+                if translator and payload:
+                    hi_text, _ = translator.translate(payload)
+                    if hi_text:
+                        st.session_state.translated_hindi_text = hi_text
+                        st.session_state.translation_error = None
+                speak_pyttsx3(payload)
+            elif "Insert" in act_type:
+                for w in payload.split():
+                    sb.append_token(w, force=True)
+
     st.markdown(
-        """
-        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:1.25rem;">
+        f"""
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:1.5rem; border-bottom:1px solid rgba(99,102,241,0.22); padding-bottom:1rem;">
             <div>
-                <div class="sb-section-tag">Assistive Workspace</div>
-                <h2 style="font-size:1.85rem; font-weight:800; letter-spacing:-0.03em; margin:0; color:var(--sb-text-main);">SignBridge Live</h2>
+                <div class="sb-section-tag">// RECOGNITION WORKSPACE</div>
+                <h1 style="font-size:2rem; font-weight:700; letter-spacing:-0.03em; margin:0; color:var(--sb-text-main);">SignBridge Live Engine</h1>
             </div>
-            <div style="display:flex; align-items:center; gap:0.75rem;">
-                <span style="font-size:0.82rem; color:var(--sb-text-subtle);">
-                    Client-Side Inference • Offline Capable
-                </span>
+            <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+                <div class="sb-status-chip">
+                    <span class="sb-status-dot sb-dot-ready"></span>
+                    <span>OPTICAL SENSOR READY // 100% OFFLINE</span>
+                </div>
+                <div class="sb-status-chip">
+                    <span class="sb-status-dot sb-dot-active"></span>
+                    <span>{len(active_macros)} MACROS ARMED</span>
+                </div>
             </div>
         </div>
         """,
@@ -54,23 +84,23 @@ def render_live_app_page(
     )
 
     # Workspace Navigation / Mode Selection Toolbar
-    m_col1, m_col2, m_col3 = st.columns([2.2, 1.2, 1.2])
+    m_col1, m_col2, m_col3 = st.columns([2.4, 1.2, 1.2])
     with m_col1:
         current_mode = st.session_state.get("live_mode_view", "Live Recognition")
-        if st.session_state.get("live_mode_selector") != current_mode:
+        if "live_mode_selector" not in st.session_state or st.session_state.live_mode_selector != current_mode:
             st.session_state.live_mode_selector = current_mode
 
-        mode_choice = st.radio(
+        def _on_live_mode_change():
+            st.session_state.live_mode_view = st.session_state.live_mode_selector
+
+        st.radio(
             "Workspace Mode",
             options=["Live Recognition", "Interactive Practice Mode"],
-            index=0 if current_mode == "Live Recognition" else 1,
             horizontal=True,
             key="live_mode_selector",
+            on_change=_on_live_mode_change,
             label_visibility="collapsed",
         )
-        if mode_choice != st.session_state.get("live_mode_view"):
-            st.session_state.live_mode_view = mode_choice
-            st.rerun()
 
     with m_col2:
         demo_btn_label = "Exit Demo Mode" if st.session_state.get("demo_mode_active", False) else "Try Demo Mode"
@@ -96,11 +126,17 @@ def render_live_app_page(
         st.markdown(
             """
             <div class="sb-demo-banner">
-                <div>
-                    <span class="sb-demo-badge">DEMO MODE ACTIVE</span>
-                    <strong style="margin-left:0.5rem; color:var(--sb-text-main); font-size:0.88rem;">Hardware Camera Bypassed</strong>
-                    <div style="font-size:0.8rem; color:var(--sb-text-muted); margin-top:0.2rem;">
-                        Click any simulated sign token below to test sentence composition, speech vocalization, and offline Hindi translation immediately.
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                    <div>
+                        <span class="sb-demo-badge">DEMO MODE ACTIVE</span>
+                        <strong style="margin-left:0.5rem; color:var(--sb-text-main); font-size:0.88rem;">Hardware Camera Bypassed</strong>
+                        <div style="font-size:0.8rem; color:#94a3b8; margin-top:0.25rem;">
+                            Click any simulated sign token below to test sentence composition, speech vocalization, custom macro triggers, and offline Hindi translation immediately.
+                        </div>
+                    </div>
+                    <div class="sb-status-chip">
+                        <span class="sb-status-dot sb-dot-active"></span>
+                        <span>SIMULATION STREAM</span>
                     </div>
                 </div>
             </div>
@@ -109,8 +145,8 @@ def render_live_app_page(
         )
         st.markdown(
             """
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--sb-text-subtle); margin-bottom:0.4rem;">
-                Simulated Gesture Controls (Click to emit token)
+            <div style="font-family:'JetBrains Mono', monospace; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#818cf8; margin-bottom:0.5rem;">
+                // SIMULATED GESTURE EMITTERS (CLICK TOKEN TO EMIT)
             </div>
             """,
             unsafe_allow_html=True,
@@ -124,6 +160,7 @@ def render_live_app_page(
                     sb.append_token(letter, force=True)
                     st.session_state.last_recognized_sign = letter
                     st.session_state.last_added_sign_flash = letter
+                    _execute_macro_if_mapped(letter)
                     st.session_state.recognition_history.insert(0, {
                         "sign": letter,
                         "time": datetime.now().strftime("%H:%M:%S"),
@@ -140,6 +177,7 @@ def render_live_app_page(
                     sb.append_token(word, force=True)
                     st.session_state.last_recognized_sign = word
                     st.session_state.last_added_sign_flash = word
+                    _execute_macro_if_mapped(word)
                     st.session_state.recognition_history.insert(0, {
                         "sign": word,
                         "time": datetime.now().strftime("%H:%M:%S"),
@@ -148,14 +186,14 @@ def render_live_app_page(
                     })
                     st.session_state.recognition_history = st.session_state.recognition_history[:30]
                     st.rerun()
-        st.markdown("<hr style='margin:1rem 0; border:none; border-top:1px dashed var(--sb-border);'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin:1.25rem 0; border:none; border-top:1px dashed rgba(99,102,241,0.22);'>", unsafe_allow_html=True)
 
     # 3. Interactive Practice Mode vs Standard Live Recognition Workspace
     if st.session_state.get("live_mode_view") == "Interactive Practice Mode":
         st.markdown(
             """
-            <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--sb-text-subtle); margin-bottom:0.5rem;">
-                Guided Posture Trainer (ISL Alphabet)
+            <div style="font-family:'JetBrains Mono', monospace; font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:#818cf8; margin-bottom:0.75rem;">
+                // GUIDED POSTURE TRAINER (ISL ALPHABET)
             </div>
             """,
             unsafe_allow_html=True,
@@ -176,53 +214,64 @@ def render_live_app_page(
             p_match_badge_placeholder = st.empty()
 
         with p_col_right:
-            curr_target = st.session_state.get("practice_target", "A")
+            # Ensure practice_target is initialized cleanly
+            if "practice_target" not in st.session_state or st.session_state.practice_target not in ISL_ALPHABET_LETTERS:
+                st.session_state.practice_target = "A"
+
+            # Safe state synchronization before widget instantiation
+            if st.session_state.get("practice_letter_select") != st.session_state.practice_target:
+                st.session_state.practice_letter_select = st.session_state.practice_target
+
+            def _on_next_practice_letter():
+                curr = st.session_state.get("practice_target", "A")
+                curr_idx = ISL_ALPHABET_LETTERS.index(curr) if curr in ISL_ALPHABET_LETTERS else 0
+                next_letter = ISL_ALPHABET_LETTERS[(curr_idx + 1) % len(ISL_ALPHABET_LETTERS)]
+                st.session_state.practice_target = next_letter
+                st.session_state.practice_letter_select = next_letter
+
+            def _on_practice_letter_change():
+                val = st.session_state.get("practice_letter_select")
+                if val in ISL_ALPHABET_LETTERS:
+                    st.session_state.practice_target = val
+
+            curr_target = st.session_state.practice_target
             target_desc = ISL_ALPHABET_GUIDE.get(curr_target, "Form the target hand shape clearly towards the camera.")
 
             st.markdown(
                 f"""
                 <div class="sb-practice-card">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1rem; border-bottom:1px solid rgba(99,102,241,0.22); padding-bottom:0.75rem;">
                         <div>
-                            <span style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--sb-text-subtle);">Current Target</span>
+                            <span style="font-family:'JetBrains Mono', monospace; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--sb-primary);">// CURRENT TARGET</span>
                             <div class="sb-practice-target">{curr_target}</div>
                         </div>
                         <div style="text-align:right;">
-                            <span style="font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--sb-text-subtle);">Matches Today</span>
-                            <div style="font-size:1.5rem; font-weight:800; color:var(--sb-success);">{st.session_state.get("practice_matches", 0)}</div>
+                            <span style="font-family:'JetBrains Mono', monospace; font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--sb-text-muted);">MATCHES TODAY</span>
+                            <div style="font-family:'JetBrains Mono', monospace; font-size:1.8rem; font-weight:700; color:#10b981;">{st.session_state.get("practice_matches", 0)}</div>
                         </div>
                     </div>
-                    <div style="font-weight:600; font-size:0.9rem; color:var(--sb-text-main); margin-bottom:0.35rem;">Posture Instruction:</div>
-                    <div style="font-size:0.85rem; color:var(--sb-text-muted); line-height:1.5; margin-bottom:1rem;">{target_desc}</div>
+                    <div style="font-family:'JetBrains Mono', monospace; font-size:0.78rem; font-weight:600; color:var(--sb-text-main); margin-bottom:0.35rem;">POSTURE INSTRUCTIONS:</div>
+                    <div style="font-size:0.86rem; color:var(--sb-text-muted); line-height:1.6; margin-bottom:1.25rem;">{target_desc}</div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-            # Ensure selectbox widget key stays synchronized with programmatic updates
-            if st.session_state.get("practice_letter_select") != curr_target and curr_target in ISL_ALPHABET_LETTERS:
-                st.session_state["practice_letter_select"] = curr_target
-
             p_nav_col1, p_nav_col2 = st.columns([1.5, 1])
             with p_nav_col1:
-                sel_target = st.selectbox(
+                st.selectbox(
                     "Switch Target Letter",
                     options=ISL_ALPHABET_LETTERS,
-                    index=ISL_ALPHABET_LETTERS.index(curr_target) if curr_target in ISL_ALPHABET_LETTERS else 0,
                     key="practice_letter_select",
+                    on_change=_on_practice_letter_change,
                 )
-                if sel_target != curr_target:
-                    st.session_state.practice_target = sel_target
-                    st.session_state["practice_letter_select"] = sel_target
-                    st.rerun()
             with p_nav_col2:
-                if st.button("Next Letter →", use_container_width=True, key="next_target_letter_btn"):
-                    curr_idx = ISL_ALPHABET_LETTERS.index(curr_target) if curr_target in ISL_ALPHABET_LETTERS else -1
-                    next_idx = (curr_idx + 1) % len(ISL_ALPHABET_LETTERS)
-                    next_letter = ISL_ALPHABET_LETTERS[next_idx]
-                    st.session_state.practice_target = next_letter
-                    st.session_state["practice_letter_select"] = next_letter
-                    st.rerun()
+                st.button(
+                    "Next Letter →",
+                    use_container_width=True,
+                    key="next_target_letter_btn",
+                    on_click=_on_next_practice_letter,
+                )
 
             p_feedback_placeholder = st.empty()
             p_feedback_placeholder.info(f"Form letter **{curr_target}** in front of your camera. When recognized, your score increases!")
@@ -278,7 +327,7 @@ def render_live_app_page(
                         if pred.is_valid:
                             if pred.label == target:
                                 p_match_badge_placeholder.markdown(
-                                    f'<div class="sb-badge-detected sb-badge-success">✓ MATCH: {pred.label} ({int(pred.confidence * 100)}%)</div>',
+                                    f'<div class="sb-badge-detected sb-badge-success"><span class="sb-status-dot sb-dot-ready"></span> ✓ MATCH: {pred.label} ({int(pred.confidence * 100)}%)</div>',
                                     unsafe_allow_html=True,
                                 )
                                 p_feedback_placeholder.success(f"🎯 Perfect! Posture for letter **{target}** matched with {int(pred.confidence * 100)}% confidence.")
@@ -287,18 +336,18 @@ def render_live_app_page(
                                     matched_this_session = True
                             else:
                                 p_match_badge_placeholder.markdown(
-                                    f'<div class="sb-badge-detected sb-badge-warning">Detected: {pred.label} • Need: {target}</div>',
+                                    f'<div class="sb-badge-detected sb-badge-warning"><span class="sb-status-dot sb-dot-warning"></span> DETECTED: {pred.label} • TARGET: {target}</div>',
                                     unsafe_allow_html=True,
                                 )
                                 p_feedback_placeholder.warning(f"Detected **{pred.label}**. Adjust your fingers to match the posture instructions for **{target}**.")
                         elif pred.label == "No hand detected":
                             p_match_badge_placeholder.markdown(
-                                '<div class="sb-badge-detected sb-badge-neutral">Position Hand in Frame</div>',
+                                '<div class="sb-badge-detected sb-badge-neutral"><span class="sb-status-dot sb-dot-neutral"></span> POSITION HAND IN FRAME</div>',
                                 unsafe_allow_html=True,
                             )
                         else:
                             p_match_badge_placeholder.markdown(
-                                f'<div class="sb-badge-detected sb-badge-neutral">Low Confidence ({int(pred.confidence * 100)}%)</div>',
+                                f'<div class="sb-badge-detected sb-badge-neutral"><span class="sb-status-dot sb-dot-neutral"></span> LOW CONFIDENCE ({int(pred.confidence * 100)}%)</div>',
                                 unsafe_allow_html=True,
                             )
 
@@ -323,12 +372,16 @@ def render_live_app_page(
             p_cam_placeholder.markdown(
                 """
                 <div class="sb-cam-offline">
-                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;">
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" style="margin-bottom:12px;">
                         <circle cx="12" cy="12" r="10"/>
                         <path d="m10 8 4 4-4 4"/>
                     </svg>
-                    <div style="font-weight:600; color:#e2e8f0; font-size:1rem; margin-bottom:4px;">Practice Camera Idle</div>
-                    <div style="color:#94a3b8; font-size:0.88rem;">Toggle <strong>Activate Practice Camera</strong> above to test your signs against the reference.</div>
+                    <div style="font-family:'JetBrains Mono', monospace; font-size:0.95rem; font-weight:700; color:var(--sb-text-main); text-transform:uppercase; margin-bottom:4px;">
+                        PRACTICE SENSOR IDLE
+                    </div>
+                    <div style="color:#94a3b8; font-size:0.85rem; max-width:380px;">
+                        Toggle <strong>Activate Practice Camera</strong> above to test your signs against the reference.
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -341,9 +394,14 @@ def render_live_app_page(
         with col_cam:
             st.markdown(
                 """
-                <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--sb-text-subtle); margin-bottom:0.5rem;">
-                    Camera & Detection Settings
-                </div>
+                <div class="sb-panel-box">
+                    <div class="sb-panel-header">
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <span class="sb-status-dot sb-dot-active"></span>
+                            <span>OPTICAL SENSOR VIEWPORT // STREAM 01</span>
+                        </div>
+                        <span style="color:#06b6d4;">60 FPS CAP</span>
+                    </div>
                 """,
                 unsafe_allow_html=True,
             )
@@ -384,15 +442,19 @@ def render_live_app_page(
             conf_bar_placeholder = st.empty()
 
             render_positioning_tips()
+            st.markdown("</div>", unsafe_allow_html=True)
 
         with col_console:
             st.markdown(
                 """
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.35rem;">
-                    <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--sb-text-subtle);">
-                        Communication Output
+                <div class="sb-panel-box">
+                    <div class="sb-panel-header">
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <span class="sb-status-dot sb-dot-ready"></span>
+                            <span>COMMUNICATION OUTPUT // BUFFER</span>
+                        </div>
+                        <span style="color:#94a3b8;">DEBOUNCED TTS</span>
                     </div>
-                </div>
                 """,
                 unsafe_allow_html=True,
             )
@@ -411,6 +473,21 @@ def render_live_app_page(
                 flash_sign = st.session_state.get("last_added_sign_flash", "")
                 if flash_sign:
                     st.markdown(f'<div style="text-align:right; margin-top:0.5rem;"><span class="sb-added-pulse">✓ Added \'{html.escape(flash_sign)}\'</span></div>', unsafe_allow_html=True)
+
+            # Macro trigger banner if executed
+            last_macro = st.session_state.get("last_triggered_macro")
+            if last_macro:
+                st.markdown(
+                    f"""
+                    <div style="background:rgba(99,102,241,0.15); border:1px solid rgba(99,102,241,0.35); border-radius:8px; padding:0.4rem 0.8rem; margin-bottom:0.6rem; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:#818cf8; font-weight:600;">
+                            ⚡ Macro Triggered: {last_macro.get('name')}
+                        </span>
+                        <span style="font-size:0.72rem; color:#94a3b8;">{last_macro.get('action_type')}</span>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
             sentence_box_placeholder = st.empty()
             token_stream_placeholder = st.empty()
@@ -435,7 +512,7 @@ def render_live_app_page(
             rec_history = st.session_state.get("recognition_history", [])
             with st.expander(f"Session Recognition History ({len(rec_history)} events)", expanded=False):
                 if not rec_history:
-                    st.markdown("<span style='font-size:0.82rem; color:var(--sb-text-subtle);'>No signs recorded in this session yet. Start signing or use Demo Mode.</span>", unsafe_allow_html=True)
+                    st.markdown("<span style='font-family:\"JetBrains Mono\", monospace; font-size:0.78rem; color:#64748b;'>No signs recorded in this session yet. Start signing or use Demo Mode.</span>", unsafe_allow_html=True)
                 else:
                     hist_html = ['<div style="display:flex; flex-wrap:wrap; gap:4px; max-height:160px; overflow-y:auto; padding:4px 0;">']
                     for h_item in rec_history[:25]:
@@ -459,8 +536,10 @@ def render_live_app_page(
                     - **Delete**: Removes the last character one by one cleanly.
                     - **Core ISL Words**: `HELLO`, `YES`, `NO`, `THANK_YOU`, `HELP`.
                     - **Offline Hindi Translation**: Click `Translate to Hindi` to translate your composed sentence to Hindi using the local neural model.
+                    - **Macro Automation**: Custom commands configured in **Studio** automatically trigger when their sign is signed.
                     """
                 )
+            st.markdown("</div>", unsafe_allow_html=True)
 
         font_style_map = {
             "Normal": "font-size:1.15rem; min-height:95px;",
@@ -470,9 +549,9 @@ def render_live_app_page(
         current_font_style = font_style_map.get(st.session_state.get("text_font_size", "Large"), "font-size:1.45rem; min-height:115px;")
 
         curr_initial_text = sb.get_text()
-        init_display = html.escape(curr_initial_text) if curr_initial_text else '<span style="color:var(--sb-text-muted);">Start signing or fingerspelling to construct your sentence...</span>'
+        init_display = html.escape(curr_initial_text) if curr_initial_text else '<span style="color:#64748b; font-family:\'JetBrains Mono\', monospace;">_ Start signing or fingerspelling to construct sentence...</span>'
         sentence_box_placeholder.markdown(f'<div class="sb-sentence-output" style="{current_font_style}">{init_display}</div>', unsafe_allow_html=True)
-        pred_badge_placeholder.markdown('<div class="sb-badge-detected sb-badge-neutral">Ready • Awaiting Hand</div>', unsafe_allow_html=True)
+        pred_badge_placeholder.markdown('<div class="sb-badge-detected sb-badge-neutral"><span class="sb-status-dot sb-dot-neutral"></span> SENSOR IDLE // AWAITING HAND</div>', unsafe_allow_html=True)
 
         # Live Camera Processing Loop
         if run_camera:
@@ -527,7 +606,7 @@ def render_live_app_page(
 
                         if pred.is_valid:
                             st.session_state.last_recognized_sign = pred.label
-                            badge_html = f'<div class="sb-badge-detected sb-badge-success">{pred.label} • {int(pred.confidence * 100)}%</div>'
+                            badge_html = f'<div class="sb-badge-detected sb-badge-success"><span class="sb-status-dot sb-dot-ready"></span> RECOGNIZED: {pred.label} • {int(pred.confidence * 100)}% CONFIDENCE</div>'
                             pred_badge_placeholder.markdown(badge_html, unsafe_allow_html=True)
                             conf_bar_placeholder.progress(min(1.0, max(0.0, pred.confidence)), text=f"Confidence: {int(pred.confidence * 100)}%")
                             if auto_add:
@@ -536,6 +615,7 @@ def render_live_app_page(
                                 after_txt = sb.get_text()
                                 if after_txt != before_txt:
                                     st.session_state.last_added_sign_flash = pred.label
+                                    _execute_macro_if_mapped(pred.label)
                                     st.session_state.recognition_history.insert(0, {
                                         "sign": pred.label,
                                         "time": datetime.now().strftime("%H:%M:%S"),
@@ -546,16 +626,16 @@ def render_live_app_page(
                         elif pred.label == "No hand detected":
                             st.session_state.last_recognized_sign = None
                             sb.notify_no_hand()
-                            pred_badge_placeholder.markdown('<div class="sb-badge-detected sb-badge-neutral">No Hand Detected</div>', unsafe_allow_html=True)
+                            pred_badge_placeholder.markdown('<div class="sb-badge-detected sb-badge-neutral"><span class="sb-status-dot sb-dot-neutral"></span> SENSOR IDLE // AWAITING HAND</div>', unsafe_allow_html=True)
                             conf_bar_placeholder.progress(0.0, text="Position hand within frame")
                         else:
                             st.session_state.last_recognized_sign = None
-                            badge_html = f'<div class="sb-badge-detected sb-badge-warning">{pred.label} • {int(pred.confidence * 100)}%</div>'
+                            badge_html = f'<div class="sb-badge-detected sb-badge-warning"><span class="sb-status-dot sb-dot-warning"></span> LOW CONFIDENCE: {pred.label} ({int(pred.confidence * 100)}%)</div>'
                             pred_badge_placeholder.markdown(badge_html, unsafe_allow_html=True)
                             conf_bar_placeholder.progress(min(1.0, max(0.0, pred.confidence)), text="Below confidence threshold")
 
                         live_text = sb.get_text()
-                        live_display = html.escape(live_text) if live_text else '<span style="color:var(--sb-text-muted);">Start signing or fingerspelling to construct your sentence...</span>'
+                        live_display = html.escape(live_text) if live_text else '<span style="color:#64748b; font-family:\'JetBrains Mono\', monospace;">_ Start signing or fingerspelling to construct sentence...</span>'
                         sentence_box_placeholder.markdown(f'<div class="sb-sentence-output" style="{current_font_style}">{live_display}</div>', unsafe_allow_html=True)
 
                         time.sleep(0.03)
@@ -580,15 +660,20 @@ def render_live_app_page(
             cam_feed_placeholder.markdown(
                 """
                 <div class="sb-cam-offline">
-                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:12px;">
+                    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="1.8" stroke-linecap="round" style="margin-bottom:12px;">
                         <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/>
                         <circle cx="12" cy="13" r="3"/>
                     </svg>
-                    <div style="font-weight:600; color:#e2e8f0; font-size:1rem; margin-bottom:4px;">Camera is Idle</div>
-                    <div style="color:#94a3b8; font-size:0.88rem;">Toggle <strong>Activate Camera</strong> above to start recognition.</div>
-                    <div style="font-size:0.78rem; color:#64748b; margin-top:8px;">All processing remains local. No video is recorded or streamed.</div>
+                    <div style="font-family:'JetBrains Mono', monospace; font-weight:700; color:var(--sb-text-main); font-size:0.95rem; text-transform:uppercase; margin-bottom:4px;">
+                        OPTICAL SENSOR IDLE
+                    </div>
+                    <div style="color:#94a3b8; font-size:0.86rem; max-width:380px;">
+                        Toggle <strong>Activate Camera</strong> above to begin 3D hand tracking and gesture recognition.
+                    </div>
+                    <div style="font-family:'JetBrains Mono', monospace; font-size:0.74rem; color:#64748b; margin-top:10px;">
+                        [ALL PROCESSING IS LOCAL // NO CLOUD VIDEO TRANSMISSION]
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
-

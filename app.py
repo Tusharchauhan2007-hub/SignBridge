@@ -1,6 +1,7 @@
 """
 SignBridge — Communication without barriers.
 Root application launcher forwarding to the modular frontend and backend packages.
+Guarantees session state, theme initialization, and dynamic styling injection on every rerun.
 """
 
 import os
@@ -33,8 +34,40 @@ except Exception:
     pass
 
 import streamlit as st
-from frontend.app import main
+
+try:
+    st.set_page_config(
+        page_title="SignBridge — AI Sign Recognition & Translation",
+        page_icon="✋",
+        layout="wide",
+        initial_sidebar_state="collapsed",
+    )
+except Exception:
+    pass
+
+from frontend.app import main as frontend_main, init_app_session_state
+from frontend.styles.theme import get_theme_css
+
+# Ensure theme state initialization exists for root app
+if "theme" not in st.session_state:
+    try:
+        q_theme = st.query_params.get("theme", None)
+        st.session_state.theme = q_theme if q_theme in ("light", "dark") else "dark"
+    except Exception:
+        st.session_state.theme = "dark"
+
+try:
+    if st.query_params.get("theme") != st.session_state.theme:
+        st.query_params["theme"] = st.session_state.theme
+except Exception:
+    pass
+
+
+def main() -> None:
+    """Main application runner."""
+    init_app_session_state()
+    frontend_main()
+
 
 if __name__ == "__main__":
     main()
-
